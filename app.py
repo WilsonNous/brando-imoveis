@@ -59,7 +59,7 @@ def contato():
         novo_lead = Lead(nome=nome, telefone=telefone, mensagem=mensagem, imovel_id=None, data=datetime.now())
         db.session.add(novo_lead)
         db.session.commit()
-        return redirect(f"https://wa.me/5548999999999?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis.")
+        return redirect(f"https://wa.me/5548991054216?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis.")
     except Exception as e:
         print("❌ Erro ao enviar contato:", e)
         return "Erro ao enviar contato.", 500
