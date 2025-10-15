@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contato | Brando Imóveis</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <header class="bg-blue-700 text-white">
+    <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+      <a href="/" class="text-white underline">← Voltar</a>
+      <h1 class="text-xl font-bold">Contato</h1>
+      <span></span>
+    </div>
+  </header>
+  <main class="max-w-3xl mx-auto p-6">
+    <form action="/contato" method="POST" class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm grid gap-3">
+      <input name="nome" placeholder="Seu nome" required class="border p-2 rounded-md" />
+      <input name="telefone" placeholder="WhatsApp" required class="border p-2 rounded-md" />
+      <input name="email" placeholder="Email (opcional)" class="border p-2 rounded-md" />
+      <textarea name="mensagem" placeholder="Como podemos ajudar?" class="border p-2 rounded-md"></textarea>
+      <button class="bg-blue-700 hover:bg-blue-800 text-white py-2 rounded-md">Enviar</button>
+    </form>
+  </main>
+</body>
+</html>

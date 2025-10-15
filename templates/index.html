@@ -5,57 +5,66 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Brando Imóveis</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <style>
-    .hero {
-      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1600607687920-4e3a3a29cb36?auto=format&fit=crop&w=1500&q=80');
-      background-size: cover;
-      background-position: center;
-    }
-  </style>
+  <link href="/static/css/main.css" rel="stylesheet" />
 </head>
 <body class="bg-gray-50 text-gray-800">
-
-  <!-- HEADER -->
   <header class="bg-blue-700 text-white">
     <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
       <h1 class="text-2xl font-bold">🏡 Brando Imóveis</h1>
-      <a href="https://wa.me/5548999999999" target="_blank" class="bg-green-500 px-4 py-2 rounded-md hover:bg-green-600 transition">
-        📱 Fale Conosco
-      </a>
+      <div class="flex gap-2">
+        <a href="/admin" class="bg-white text-blue-700 px-3 py-2 rounded-md hover:bg-gray-100">Admin</a>
+        <a href="https://wa.me/5548999999999" target="_blank" class="bg-green-500 px-4 py-2 rounded-md hover:bg-green-600 transition">📱 Fale Conosco</a>
+      </div>
     </div>
   </header>
-
-  <!-- HERO -->
-  <section class="hero text-white text-center py-20">
-    <h2 class="text-3xl md:text-5xl font-bold mb-4">Encontre o imóvel ideal</h2>
-    <p class="text-lg md:text-xl">Casas, apartamentos e oportunidades em toda a região</p>
+  <section class="text-white text-center py-16" style="background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)), url('https://images.unsplash.com/photo-1600607687920-4e3a3a29cb36?auto=format&fit=crop&w=1500&q=80') center/cover;">
+    <h2 class="text-3xl md:text-5xl font-bold mb-2">Encontre o imóvel ideal</h2>
+    <p class="text-lg md:text-xl opacity-95">Casas, apartamentos e oportunidades em toda a região</p>
   </section>
-
-  <!-- FILTROS -->
-  <section class="bg-white shadow-md p-4 mt-6 max-w-6xl mx-auto rounded-lg flex flex-col md:flex-row justify-between items-center">
-    <input type="text" placeholder="🔍 Buscar por bairro, tipo ou código" class="w-full md:w-2/3 border border-gray-300 p-2 rounded-md mb-2 md:mb-0">
-    <button class="bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">Buscar</button>
+  <section class="bg-white shadow-md p-4 mt-6 max-w-6xl mx-auto rounded-lg flex flex-col md:flex-row justify-between items-center gap-2">
+    <input id="search-input" type="text" placeholder="🔍 Buscar por bairro, tipo ou código" class="w-full md:w-2/3 border border-gray-300 p-2 rounded-md">
+    <a href="/contato" class="w-full md:w-auto text-center bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">Quero mais informações</a>
   </section>
-
-  <!-- LISTAGEM DE IMÓVEIS -->
   <section class="max-w-7xl mx-auto grid sm:grid-cols-2 md:grid-cols-3 gap-6 p-6">
     {% for i in imoveis %}
-    <div class="bg-white shadow-lg rounded-xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1">
-      <img src="{{ i.imagem }}" class="w-full h-52 object-cover">
+    <div class="card bg-white shadow-lg rounded-xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1"
+         data-card
+         data-search="{{ (i.tipo ~ ' ' ~ i.bairro ~ ' ' ~ i.codigo ~ ' R$ ' ~ i.valor)|lower }}">
+      <div class="relative">
+        <span class="badge">{{ i.tipo }}</span>
+        <img src="{{ i.imagem or 'https://picsum.photos/800/600?blur=1' }}" class="w-full h-52 object-cover" alt="Imagem do imóvel {{ i.codigo }}">
+      </div>
       <div class="p-4">
         <h3 class="text-xl font-semibold text-blue-700 mb-1">{{ i.tipo }} - {{ i.bairro }}</h3>
-        <p class="text-gray-700 font-medium mb-2">R$ {{ '{:,.2f}'.format(i.valor) }}</p>
-        <p class="text-sm text-gray-500 mb-3">{{ i.descricao[:90] }}...</p>
-        <a href="/imovel/{{ i.id }}" class="inline-block bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">Ver detalhes</a>
+        <p class="text-gray-700 price mb-2">R$ {{ '{:,.2f}'.format(i.valor) }}</p>
+        <p class="text-sm text-gray-500 mb-3">{{ (i.descricao or '')[:110] }}{% if i.descricao and i.descricao|length > 110 %}...{% endif %}</p>
+        <div class="flex items-center justify-between">
+          <a href="/imovel/{{ i.id }}" class="inline-block bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">Ver detalhes</a>
+          <button class="text-sm underline" data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">Copiar msg WhatsApp</button>
+        </div>
       </div>
     </div>
     {% endfor %}
   </section>
-
-  <!-- FOOTER -->
   <footer class="bg-blue-800 text-white text-center py-6 mt-10">
-    <p class="text-sm">© 2025 Brando Imóveis | Desenvolvido por <span class="font-semibold">Nous Tecnologia</span></p>
+    <p class="text-sm">© 2025 Brando Imóveis | Desenvolvido por <span class="font-semibold">Nous</span></p>
   </footer>
-
+  <button id="brandinho-toggle">💬 Falar com o Brandinho</button>
+  <div id="brandinho-box" aria-live="polite">
+    <div id="brandinho-header">
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Brando" alt="Brandinho">
+      <div>
+        <div class="font-semibold">Brandinho</div>
+        <div class="text-sm opacity-90">Assistente virtual da Brando Imóveis</div>
+      </div>
+    </div>
+    <div id="brandinho-messages"></div>
+    <div id="brandinho-input">
+      <input id="brandinho-text" placeholder="Ex.: apartamento até 600 mil em Canasvieiras" />
+      <button id="brandinho-send">Enviar</button>
+    </div>
+  </div>
+  <div class="toast"></div>
+  <script src="/static/js/script.js"></script>
 </body>
 </html>
