@@ -1,7 +1,7 @@
 # 🏡 Brando Imóveis – Protótipo v1
 
 ## 🎯 Objetivo
-O projeto **Brando Imóveis** nasce como uma iniciativa do grupo de empreendedores liderado por **Brando e Janaina**, com o apoio da **Nous / Netunna Tech**, para criar uma plataforma moderna e automatizada de gestão imobiliária.
+O projeto **Brando Imóveis** nasce como uma iniciativa de apoio ao grupo de empreendedores liderado por **Brando e Janaina**, com o apoio da **Nous Tech**, para criar uma plataforma moderna e automatizada de gestão imobiliária.
 
 O sistema permite divulgar imóveis de forma dinâmica, captar leads com retorno via WhatsApp, e facilitar o controle administrativo — tudo com base no banco de dados MySQL hospedado no HostGator e deploy no Render.
 
