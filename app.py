@@ -43,7 +43,7 @@ def lead():
         db.session.add(novo_lead)
         db.session.commit()
         msg = f"Olá! Tenho interesse no imóvel código {imovel_id}" if imovel_id else "Olá! Tenho interesse em imóveis da Brando."
-        return redirect(f"https://wa.me/5548999999999?text={msg}")
+        return redirect(f"https://wa.me/5548991054216?text={msg}")
     except Exception as e:
         print("❌ Erro ao registrar lead:", e)
         return "Erro ao enviar lead.", 500
