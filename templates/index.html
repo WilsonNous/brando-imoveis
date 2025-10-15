@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Brando Imóveis</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+  <header class="bg-blue-700 text-white p-4 text-center text-xl font-bold">
+    🏡 Brando Imóveis
+  </header>
+
+  <section class="grid md:grid-cols-3 gap-6 p-6">
+    {% for i in imoveis %}
+      <div class="bg-white shadow-lg rounded-xl p-4">
+        <img src="{{ i.imagem }}" class="w-full h-48 object-cover rounded-md">
+        <h3 class="text-lg font-semibold mt-2">{{ i.tipo }} - {{ i.bairro }}</h3>
+        <p class="text-gray-600">R$ {{ i.valor }}</p>
+        <a href="/imovel/{{ i.id }}" class="text-blue-600 font-bold">Ver detalhes</a>
+      </div>
+    {% endfor %}
+  </section>
+</body>
+</html>
