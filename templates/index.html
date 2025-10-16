@@ -6,6 +6,23 @@
   <title>Brando Imóveis</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="/static/css/main.css" rel="stylesheet" />
+  <style>
+    /* === Sobrescrita das cores Tailwind pela paleta Brando === */
+    .bg-blue-700, .bg-blue-800, .text-blue-700, .text-blue-800 {
+      background-color: #557985 !important;
+      color: #fff !important;
+    }
+    .hover\:bg-blue-800:hover {
+      background-color: #88A9B9 !important;
+      color: #fff !important;
+    }
+    .text-blue-700, .text-blue-800 {
+      color: #557985 !important;
+    }
+    footer.bg-blue-800 {
+      background-color: #557985 !important;
+    }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
   <header class="bg-blue-700 text-white">
@@ -17,14 +34,22 @@
       </div>
     </div>
   </header>
-  <section class="text-white text-center py-16" style="background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)), url('https://images.unsplash.com/photo-1600607687920-4e3a3a29cb36?auto=format&fit=crop&w=1500&q=80') center/cover;">
+
+  <section class="text-white text-center py-16"
+    style="background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)), 
+           url('https://images.unsplash.com/photo-1600607687920-4e3a3a29cb36?auto=format&fit=crop&w=1500&q=80') center/cover;">
     <h2 class="text-3xl md:text-5xl font-bold mb-2">Encontre o imóvel ideal</h2>
     <p class="text-lg md:text-xl opacity-95">Casas, apartamentos e oportunidades em toda a região</p>
   </section>
+
   <section class="bg-white shadow-md p-4 mt-6 max-w-6xl mx-auto rounded-lg flex flex-col md:flex-row justify-between items-center gap-2">
-    <input id="search-input" type="text" placeholder="🔍 Buscar por bairro, tipo ou código" class="w-full md:w-2/3 border border-gray-300 p-2 rounded-md">
-    <a href="/contato" class="w-full md:w-auto text-center bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">Quero mais informações</a>
+    <input id="search-input" type="text" placeholder="🔍 Buscar por bairro, tipo ou código"
+      class="w-full md:w-2/3 border border-gray-300 p-2 rounded-md">
+    <a href="/contato" class="w-full md:w-auto text-center bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">
+      Quero mais informações
+    </a>
   </section>
+
   <section class="max-w-7xl mx-auto grid sm:grid-cols-2 md:grid-cols-3 gap-6 p-6">
     {% for i in imoveis %}
     <div class="card bg-white shadow-lg rounded-xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1"
@@ -40,16 +65,15 @@
         <p class="text-sm text-gray-500 mb-3">{{ (i.descricao or '')[:110] }}{% if i.descricao and i.descricao|length > 110 %}...{% endif %}</p>
         <div class="flex items-center justify-between">
           <a href="/imovel/{{ i.id }}" class="inline-block bg-blue-700 text-white px-4 py-2 rounded-md hover:bg-blue-800 transition">Ver detalhes</a>
-          <button class="text-sm underline" data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">Copiar msg WhatsApp</button>
+          <button class="text-sm underline text-blue-700" data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">Copiar msg WhatsApp</button>
         </div>
       </div>
     </div>
     {% endfor %}
   </section>
+
   <footer class="bg-blue-800 text-white text-center py-6 mt-10">
-    <p class="text-sm mb-1">
-      📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis
-    </p>
+    <p class="text-sm mb-1">📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis</p>
     <p class="text-sm italic mb-2">
       “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.”<br>
       <span class="opacity-80">Provérbios 16:3</span>
@@ -59,6 +83,7 @@
       Desenvolvido por <span class="font-semibold">Nous Tecnologia</span>
     </p>
   </footer>
+
   <button id="brandinho-toggle">💬 Falar com o Brandinho</button>
   <div id="brandinho-box" aria-live="polite">
     <div id="brandinho-header">
@@ -74,6 +99,7 @@
       <button id="brandinho-send">Enviar</button>
     </div>
   </div>
+
   <div class="toast"></div>
   <script src="/static/js/script.js"></script>
 </body>
