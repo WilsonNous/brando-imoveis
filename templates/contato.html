@@ -4,9 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contato | Brando Imóveis</title>
+
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <meta name="author" content="Brando Imóveis - CRECI 61150" />
   <meta name="description" content="Brando Imóveis | CRECI 61150 | Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis. 'Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.' Provérbios 16:3" />
+
+  <style>
+    /* === Paleta oficial Brando === */
+    .bg-blue-700, .bg-blue-800 {
+      background-color: #557985 !important;
+      color: #fff !important;
+    }
+    .hover\:bg-blue-800:hover {
+      background-color: #88A9B9 !important;
+      color: #fff !important;
+    }
+    .text-blue-700, .text-blue-800 {
+      color: #557985 !important;
+    }
+    footer.bg-blue-800 {
+      background-color: #557985 !important;
+    }
+  </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800">
@@ -14,7 +33,7 @@
   <header class="bg-blue-700 text-white shadow">
     <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
       <a href="/" class="text-white underline hover:text-gray-200">← Voltar</a>
-      <h1 class="text-xl font-bold">Contato</h1>
+      <h1 class="text-xl font-bold tracking-wide">Contato</h1>
       <span></span>
     </div>
   </header>
@@ -25,6 +44,7 @@
     <p class="text-center text-gray-600 mb-6">
       Preencha o formulário abaixo e retornaremos o mais breve possível.
     </p>
+
     <form action="/contato" method="POST" class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm grid gap-3">
       <input name="nome" placeholder="Seu nome" required 
              class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none" />
