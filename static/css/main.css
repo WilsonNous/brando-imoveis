@@ -297,6 +297,31 @@ html, body {
   background-color: var(--brand-blue-700);
 }
 
+/* =====================================================
+   Rolagem dos cards de imóveis (área scroll)
+   ===================================================== */
+section.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-blue) #f0f0f0;
+}
+
+section.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+section.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+section.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: var(--brand-blue);
+  border-radius: 4px;
+}
+
+section.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background-color: var(--brand-blue-700);
+}
 
 .banner-content h2,
 .banner-content p {
