@@ -180,6 +180,37 @@ def admin_import():
     print(f"✅ Importados/atualizados: {count}")
     return redirect('/admin')
 
+@app.route('/servicos', methods=['GET', 'POST'])
+def servicos():
+    if request.method == 'POST':
+        novo = Servico(
+            nome_cliente=request.form['nome_cliente'],
+            telefone=request.form['telefone'],
+            imovel_id=request.form.get('imovel_id') or None,
+            tipo_servico=request.form['tipo_servico'],
+            descricao=request.form['descricao']
+        )
+        db.session.add(novo)
+        db.session.commit()
+        return render_template('servicos.html', sucesso=True)
+    return render_template('servicos.html', sucesso=False)
+
+@app.route('/admin/servicos')
+def admin_servicos():
+    servicos = Servico.query.order_by(Servico.data_solicitacao.desc()).all()
+    return render_template('admin_servicos.html', servicos=servicos)
+
+@app.route('/admin/servicos/update/<int:id>', methods=['POST'])
+def update_servico(id):
+    s = Servico.query.get(id)
+    s.status = request.form.get('status', s.status)
+    s.data_agendamento = datetime.strptime(request.form.get('data_agendamento'), "%Y-%m-%d") if request.form.get('data_agendamento') else s.data_agendamento
+    s.responsavel = request.form.get('responsavel')
+    s.custo = request.form.get('custo') or 0
+    s.materiais = request.form.get('materiais')
+    db.session.commit()
+    return redirect('/admin/servicos')
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
