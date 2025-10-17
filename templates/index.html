@@ -10,83 +10,12 @@
 
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="/static/css/main.css" rel="stylesheet" />
-
-  <style>
-    /* === Paleta Institucional Brando Imóveis === */
-    :root {
-      --brando-dark: #33545f;
-      --brando-main: #557985;
-      --brando-light: #88a9b9;
-      --brando-bg: #f9fafb;
-    }
-
-    header {
-      background-color: var(--brando-main);
-    }
-
-    .btn-admin {
-      border: 1px solid #fff;
-      color: #fff;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      transition: all 0.2s ease;
-    }
-
-    .btn-admin:hover {
-      background-color: #fff;
-      color: var(--brando-main);
-    }
-
-    .btn-whatsapp {
-      background-color: #22c55e;
-      color: #fff;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      transition: all 0.2s ease;
-    }
-
-    .btn-whatsapp:hover {
-      background-color: #16a34a;
-    }
-
-    .banner {
-      background-color: var(--brando-main);
-      position: relative;
-      color: #fff;
-    }
-
-    .banner img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.25;
-    }
-
-    .banner-content {
-      position: relative;
-      z-index: 10;
-    }
-
-    footer {
-      background-color: var(--brando-main);
-    }
-
-    .text-brando {
-      color: var(--brando-main);
-    }
-
-    .bg-brando {
-      background-color: var(--brando-main);
-    }
-  </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800">
 
   <!-- HEADER -->
-  <header class="text-white shadow">
+  <header class="text-white shadow bg-[color:var(--brand-blue)]">
     <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
       <div class="flex items-center gap-3">
         <img src="/static/img/brando_logo.png" alt="Brando Imóveis" class="h-10">
@@ -94,24 +23,25 @@
       </div>
       <div class="flex gap-2">
         <a href="/admin" class="btn-admin">Admin</a>
-        <a href="https://wa.me/5548999999999" target="_blank" class="btn-whatsapp">📱 Fale Conosco</a>
+        <a href="/servicos" class="btn-admin">Serviços</a>
+        <a href="https://wa.me/554891054216" target="_blank" class="btn-whatsapp">📱 Fale Conosco</a>
       </div>
     </div>
   </header>
 
   <!-- BANNER PRINCIPAL -->
-  <section class="banner text-center py-20 overflow-hidden">
-    <img src="https://images.unsplash.com/photo-1600607687920-4e3a3a29cb36?auto=format&fit=crop&w=1500&q=80" alt="">
-    <div class="banner-content">
+  <section class="banner text-center py-20 overflow-hidden relative text-white">
+    <img src="https://images.unsplash.com/photo-1600607687920-4e3a3a29cb36?auto=format&fit=crop&w=1500&q=80" alt="" class="absolute inset-0 w-full h-full object-cover opacity-25">
+    <div class="banner-content relative z-10">
       <h2 class="text-3xl md:text-5xl font-bold mb-2">Encontre o imóvel ideal</h2>
-      <p class="text-lg md:text-xl opacity-95">Casas, apartamentos e oportunidades em toda a região</p>
+      <p class="text-lg md:text-xl opacity-95">E conte com a Brando também depois da compra 💙</p>
     </div>
   </section>
 
   <!-- BARRA DE BUSCA -->
   <section class="bg-white shadow-md p-4 mt-6 max-w-6xl mx-auto rounded-lg flex flex-col md:flex-row justify-between items-center gap-2">
     <input id="search-input" type="text" placeholder="🔍 Buscar por bairro, tipo ou código" class="w-full md:w-2/3 border border-gray-300 p-2 rounded-md">
-    <a href="/contato" class="w-full md:w-auto text-center bg-brando text-white px-4 py-2 rounded-md hover:bg-[#33545f] transition">
+    <a href="/contato" class="w-full md:w-auto text-center bg-[color:var(--brand-blue)] text-white px-4 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">
       Quero mais informações
     </a>
   </section>
@@ -123,35 +53,34 @@
          data-card
          data-search="{{ (i.tipo ~ ' ' ~ i.bairro ~ ' ' ~ i.codigo ~ ' R$ ' ~ i.valor)|lower }}">
       <div class="relative">
-        <span class="badge bg-brando text-white absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow">{{ i.tipo }}</span>
+        <span class="badge bg-[color:var(--brand-blue)] text-white absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow">{{ i.tipo }}</span>
         <img src="{{ i.imagem or 'https://picsum.photos/800/600?blur=1' }}" class="w-full h-52 object-cover" alt="Imagem do imóvel {{ i.codigo }}">
       </div>
       <div class="p-4">
-        <h3 class="text-xl font-semibold text-brando mb-1">{{ i.tipo }} - {{ i.bairro }}</h3>
+        <h3 class="text-xl font-semibold text-[color:var(--brand-blue)] mb-1">{{ i.tipo }} - {{ i.bairro }}</h3>
         <p class="text-gray-700 price mb-2 font-bold">R$ {{ '{:,.2f}'.format(i.valor) }}</p>
         <p class="text-sm text-gray-500 mb-3">{{ (i.descricao or '')[:110] }}{% if i.descricao and i.descricao|length > 110 %}...{% endif %}</p>
         <div class="flex items-center justify-between">
-          <a href="/imovel/{{ i.id }}" class="inline-block bg-brando text-white px-4 py-2 rounded-md hover:bg-[#33545f] transition">Ver detalhes</a>
-          <button class="text-sm underline text-brando" data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">Copiar msg WhatsApp</button>
+          <a href="/imovel/{{ i.id }}" class="inline-block bg-[color:var(--brand-blue)] text-white px-4 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">Ver detalhes</a>
+          <button class="text-sm underline text-[color:var(--brand-blue)]" data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">Copiar msg WhatsApp</button>
         </div>
       </div>
     </div>
     {% endfor %}
   </section>
 
+  <!-- SEÇÃO DE SERVIÇOS -->
+  <section class="bg-gray-100 text-center py-10 mt-6 border-t border-gray-200">
+    <h2 class="text-2xl font-bold text-[color:var(--brand-blue)] mb-2">Serviços e Manutenções</h2>
+    <p class="text-gray-600 mb-4">Comprou com a Brando? Continue contando com a gente!<br>Solicite manutenção, reforma ou reparos no seu imóvel.</p>
+    <a href="/servicos" class="bg-[color:var(--brand-blue)] text-white px-6 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition font-medium">Solicitar Serviço</a>
+  </section>
+
   <!-- RODAPÉ -->
-  <footer class="text-white text-center py-6 mt-10">
-    <p class="text-sm mb-1">
-      📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis
-    </p>
-    <p class="text-sm italic mb-2">
-      “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.”<br>
-      <span class="opacity-80">Provérbios 16:3</span>
-    </p>
-    <p class="text-xs opacity-90">
-      © 2025 Brando Imóveis | CRECI 61150<br>
-      Desenvolvido por <span class="font-semibold">Nous Tecnologia</span>
-    </p>
+  <footer class="text-white text-center py-6 mt-10 bg-[color:var(--brand-blue)]">
+    <p class="text-sm mb-1">📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis</p>
+    <p class="text-sm italic mb-2">“Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.”<br><span class="opacity-80">Provérbios 16:3</span></p>
+    <p class="text-xs opacity-90">© 2025 Brando Imóveis | CRECI 61150<br>Desenvolvido por <span class="font-semibold">Nous Tecnologia</span></p>
   </footer>
 
   <!-- BRANDINHO -->
