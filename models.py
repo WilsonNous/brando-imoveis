@@ -17,6 +17,9 @@ class Imovel(db.Model):
     leads = db.relationship('Lead', backref='imovel', lazy=True)
     servicos = db.relationship('Servico', backref='imovel', lazy=True)
 
+    def __repr__(self):
+        return f"<Imovel {self.codigo} - {self.tipo} ({self.bairro})>"
+
 
 class Lead(db.Model):
     __tablename__ = 'lead'
@@ -26,6 +29,9 @@ class Lead(db.Model):
     mensagem = db.Column(db.Text)
     imovel_id = db.Column(db.Integer, db.ForeignKey('imovel.id'), nullable=True)
     data = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<Lead {self.nome} - {self.telefone}>"
 
 
 class Servico(db.Model):
@@ -45,3 +51,6 @@ class Servico(db.Model):
         db.Enum('pendente', 'andamento', 'concluido', name='status_servico_enum'),
         default='pendente'
     )
+
+    def __repr__(self):
+        return f"<Servico {self.tipo_servico or ''} - {self.nome_cliente}>"
