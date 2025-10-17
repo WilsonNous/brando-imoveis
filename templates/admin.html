@@ -10,34 +10,26 @@
 
   <meta name="author" content="Brando Imóveis - CRECI 61150" />
   <meta name="description" content="Painel administrativo Brando Imóveis | CRECI 61150 | Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis." />
-
-  <style>
-    /* === Paleta oficial Brando (ajuste de tons Tailwind) === */
-    .bg-blue-700, .bg-blue-800 {
-      background-color: #557985 !important;
-      color: #fff !important;
-    }
-    .hover\:bg-blue-800:hover {
-      background-color: #88A9B9 !important;
-      color: #fff !important;
-    }
-    .text-blue-700, .text-blue-800 {
-      color: #557985 !important;
-    }
-  </style>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
   <!-- HEADER -->
-  <header class="bg-blue-700 text-white shadow">
+  <header class="bg-[color:var(--brand-blue)] text-white shadow">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center p-4 gap-2">
       <div>
         <h1 class="text-xl font-bold">Painel Administrativo - Brando Imóveis</h1>
         <span class="text-sm opacity-90">CRECI 61150</span>
       </div>
+
       <div class="flex flex-wrap gap-2 items-center">
-        <a href="/" class="bg-white text-blue-700 px-3 py-2 rounded-md hover:bg-gray-100 transition">Ver site</a>
-        <a href="/admin/export" class="bg-white text-blue-700 px-3 py-2 rounded-md hover:bg-gray-100 transition">Exportar CSV</a>
+        <a href="/" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">Ver site</a>
+        <a href="/admin/export" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">Exportar CSV</a>
+
+        <!-- 🛠️ Novo botão: Painel de Serviços -->
+        <a href="/admin/servicos" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition">
+          🛠️ Serviços
+        </a>
+
         <form action="/admin/import" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
           <input type="file" name="csvfile" accept=".csv" class="text-sm" required />
           <button class="bg-green-500 text-white px-3 py-2 rounded-md hover:bg-green-600 transition">Importar CSV</button>
@@ -50,29 +42,29 @@
   <main class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
     <!-- FORMULÁRIO -->
     <section class="md:col-span-1 bg-white p-4 rounded-xl shadow">
-      <h2 class="font-semibold mb-3 text-blue-700">Cadastrar / Editar Imóvel</h2>
+      <h2 class="font-semibold mb-3 text-[color:var(--brand-blue)]">Cadastrar / Editar Imóvel</h2>
       <form action="/admin/save" method="post" class="grid gap-3">
         <input name="id" type="hidden" value="{{ imovel.id if imovel else '' }}">
-        <input name="codigo" placeholder="Código (ex: A001)" value="{{ imovel.codigo if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none">
-        <input name="tipo" placeholder="Tipo (Casa, Apto...)" value="{{ imovel.tipo if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none">
-        <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none">
-        <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none">
-        <input name="imagem" placeholder="URL da imagem (https://...)" value="{{ imovel.imagem if imovel else '' }}" class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none">
-        <textarea name="descricao" placeholder="Descrição" class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none">{{ imovel.descricao if imovel else '' }}</textarea>
-        <select name="status" class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none">
+        <input name="codigo" placeholder="Código (ex: A001)" value="{{ imovel.codigo if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">
+        <input name="tipo" placeholder="Tipo (Casa, Apto...)" value="{{ imovel.tipo if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">
+        <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">
+        <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">
+        <input name="imagem" placeholder="URL da imagem (https://...)" value="{{ imovel.imagem if imovel else '' }}" class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">
+        <textarea name="descricao" placeholder="Descrição" class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">{{ imovel.descricao if imovel else '' }}</textarea>
+        <select name="status" class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">
           <option value="ativo" {{ 'selected' if (imovel and imovel.status=='ativo') else '' }}>Ativo</option>
           <option value="inativo" {{ 'selected' if (imovel and imovel.status=='inativo') else '' }}>Inativo</option>
         </select>
-        <button class="bg-blue-700 text-white py-2 rounded-md hover:bg-blue-800 transition">Salvar</button>
+        <button class="bg-[color:var(--brand-blue)] text-white py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">Salvar</button>
       </form>
     </section>
 
     <!-- LISTAGEM -->
     <section class="md:col-span-2 bg-white p-4 rounded-xl shadow">
       <div class="flex justify-between items-center mb-3">
-        <h2 class="font-semibold text-blue-700">Imóveis cadastrados</h2>
+        <h2 class="font-semibold text-[color:var(--brand-blue)]">Imóveis cadastrados</h2>
         <form method="get" action="/admin" class="flex gap-2">
-          <input name="q" placeholder="Filtrar por texto" value="{{ request.args.get('q','') }}" class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none" />
+          <input name="q" placeholder="Filtrar por texto" value="{{ request.args.get('q','') }}" class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none" />
           <button class="bg-gray-800 text-white px-3 rounded-md hover:bg-gray-900 transition">Filtrar</button>
         </form>
       </div>
@@ -96,10 +88,10 @@
               <td class="py-2 px-2">{{ i.codigo }}</td>
               <td class="py-2 px-2">{{ i.tipo }}</td>
               <td class="py-2 px-2">{{ i.bairro }}</td>
-              <td class="py-2 px-2 text-blue-700 font-semibold">R$ {{ '{:,.2f}'.format(i.valor) }}</td>
+              <td class="py-2 px-2 text-[color:var(--brand-blue)] font-semibold">R$ {{ '{:,.2f}'.format(i.valor) }}</td>
               <td class="py-2 px-2">{{ i.status }}</td>
               <td class="py-2 px-2 flex gap-2">
-                <a class="text-blue-700 underline" href="/admin/edit/{{ i.id }}">Editar</a>
+                <a class="text-[color:var(--brand-blue)] underline" href="/admin/edit/{{ i.id }}">Editar</a>
                 <a class="text-red-600 underline" href="/admin/delete/{{ i.id }}" onclick="return confirm('Excluir este imóvel?');">Excluir</a>
               </td>
             </tr>
