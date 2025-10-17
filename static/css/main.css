@@ -229,3 +229,8 @@ html, body {
 .bg-brando { background-color: var(--brand-blue) !important; color: #fff !important; }
 .text-brando { color: var(--brand-blue) !important; }
 .hover\:bg-brando-light:hover { background-color: var(--brand-light) !important; color: #fff !important; }
+
+.banner-content h2,
+.banner-content p {
+  color: var(--brand-dark) !important;
+}
