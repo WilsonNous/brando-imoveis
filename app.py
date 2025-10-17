@@ -4,7 +4,7 @@ from datetime import datetime
 from io import StringIO
 import csv
 import config
-from models import db, Imovel, Lead
+from models import db, Imovel, Lead, Servico
 import io
 
 app = Flask(__name__)
