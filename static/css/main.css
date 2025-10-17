@@ -199,3 +199,33 @@ html, body {
 .btn-brand:hover {
   background: var(--brand-blue-700);
 }
+
+/* =====================================================
+   Interpretação automática de variáveis Tailwind-like
+   ===================================================== */
+
+/* Variáveis base da paleta Brando */
+:root {
+  --brand-dark: #33545f;
+  --brand-blue: #557985;
+  --brand-light: #88a9b9;
+  --brand-green: #22c55e;
+}
+
+/* Interpretação simulada para as classes bg-[color:var(...)] e text-[color:var(...)] */
+[class*="bg-[color:var(--brand-blue)]"]     { background-color: var(--brand-blue) !important; color: #fff !important; }
+[class*="bg-[color:var(--brand-blue-700)]"] { background-color: var(--brand-light) !important; color: #fff !important; }
+[class*="bg-[color:var(--brand-dark)]"]     { background-color: var(--brand-dark) !important; color: #fff !important; }
+[class*="text-[color:var(--brand-blue)]"]   { color: var(--brand-blue) !important; }
+[class*="text-[color:var(--brand-blue-700)]"] { color: var(--brand-light) !important; }
+
+/* Hovers */
+[class*="hover:bg-[color:var(--brand-blue-700)]"]:hover {
+  background-color: var(--brand-light) !important;
+  color: #fff !important;
+}
+
+/* Fallback genéricos */
+.bg-brando { background-color: var(--brand-blue) !important; color: #fff !important; }
+.text-brando { color: var(--brand-blue) !important; }
+.hover\:bg-brando-light:hover { background-color: var(--brand-light) !important; color: #fff !important; }
