@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - Serviços | Brando Imóveis</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link href="/static/css/main.css" rel="stylesheet" />
-
   <meta name="author" content="Brando Imóveis - CRECI 61150" />
   <meta name="description" content="Painel administrativo de serviços Brando Imóveis | CRECI 61150 | Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis." />
+
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="/static/css/main.css" rel="stylesheet" />
 </head>
 
 <body class="bg-gray-50 text-gray-900">
 
   <!-- HEADER -->
   <header class="header-bar flex justify-between items-center px-6">
-    <h1 class="text-xl font-bold">🛠️ Painel de Serviços - Brando Imóveis</h1>
+    <h1 class="text-xl font-bold flex items-center gap-2">
+      🛠️ Painel de Serviços - Brando Imóveis
+    </h1>
     <a href="/admin" class="btn-admin-sec">← Voltar ao painel principal</a>
   </header>
 
@@ -28,6 +30,7 @@
           <tr>
             <th class="py-2 px-3">#</th>
             <th class="py-2 px-3">Cliente</th>
+            <th class="py-2 px-3">Imóvel</th>
             <th class="py-2 px-3">Serviço</th>
             <th class="py-2 px-3">Descrição</th>
             <th class="py-2 px-3">Agendamento</th>
@@ -40,9 +43,26 @@
           <tr>
             <td class="py-2 px-3">{{ s.id }}</td>
             <td class="py-2 px-3 font-semibold">{{ s.nome_cliente }}</td>
+
+            <!-- Mostra o imóvel vinculado -->
+            <td class="py-2 px-3 text-gray-700">
+              {% if s.imovel %}
+                <span class="font-medium text-[color:var(--brand-blue)]">
+                  {{ s.imovel.codigo }}
+                </span> – {{ s.imovel.tipo }}<br>
+                <small class="text-gray-500">{{ s.imovel.bairro }}</small>
+              {% else %}
+                <span class="text-gray-400 italic">Sem vínculo</span>
+              {% endif %}
+            </td>
+
             <td class="py-2 px-3">{{ s.tipo_servico }}</td>
-            <td class="py-2 px-3 text-gray-600">{{ s.descricao[:60] }}...</td>
-            <td class="py-2 px-3">{{ s.data_agendamento.strftime('%d/%m/%Y') if s.data_agendamento else '-' }}</td>
+            <td class="py-2 px-3 text-gray-600">
+              {{ s.descricao[:60] }}{% if s.descricao and s.descricao|length > 60 %}...{% endif %}
+            </td>
+            <td class="py-2 px-3">
+              {{ s.data_agendamento.strftime('%d/%m/%Y') if s.data_agendamento else '-' }}
+            </td>
             <td class="py-2 px-3">
               <span class="px-2 py-1 rounded text-white text-xs
                 {% if s.status == 'pendente' %}bg-gray-400
@@ -51,6 +71,7 @@
                 {{ s.status }}
               </span>
             </td>
+
             <td class="py-2 px-3">
               <form method="POST" action="/admin/servicos/update/{{ s.id }}" class="grid grid-cols-1 gap-1">
                 <input name="responsavel" placeholder="Responsável" value="{{ s.responsavel or '' }}" class="field text-xs" />
@@ -76,5 +97,6 @@
   <footer class="text-center text-sm text-gray-600 mt-8 italic">
     “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.” — Provérbios 16:3
   </footer>
+
 </body>
 </html>
