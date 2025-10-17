@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, redirect, jsonify, send_file
 from datetime import datetime
 from io import StringIO
@@ -13,6 +12,10 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFICAT
 app.secret_key = config.SECRET_KEY
 db.init_app(app)
 
+# ============================================================
+# PÁGINAS PÚBLICAS
+# ============================================================
+
 @app.route('/')
 def home():
     try:
@@ -22,12 +25,18 @@ def home():
         print("❌ Erro ao consultar imóveis:", e)
         return "Erro ao conectar ao banco de dados.", 500
 
+
 @app.route('/imovel/<int:id>')
 def imovel_detalhe(id):
     imovel = Imovel.query.get(id)
     if not imovel:
         return "Imóvel não encontrado.", 404
     return render_template('imovel.html', imovel=imovel)
+
+
+# ============================================================
+# LEADS E CONTATOS
+# ============================================================
 
 @app.route('/lead', methods=['POST'])
 def lead():
@@ -36,39 +45,51 @@ def lead():
         telefone = request.form['telefone']
         mensagem = request.form.get('mensagem', '')
         imovel_id = request.form.get('imovel_id')
+
         novo_lead = Lead(
-            nome=nome, telefone=telefone, mensagem=mensagem,
-            imovel_id=imovel_id, data=datetime.now()
+            nome=nome,
+            telefone=telefone,
+            mensagem=mensagem,
+            imovel_id=imovel_id,
+            data=datetime.now()
         )
         db.session.add(novo_lead)
         db.session.commit()
+
         msg = f"Olá! Tenho interesse no imóvel código {imovel_id}" if imovel_id else "Olá! Tenho interesse em imóveis da Brando."
         return redirect(f"https://wa.me/5548991054216?text={msg}")
     except Exception as e:
         print("❌ Erro ao registrar lead:", e)
         return "Erro ao enviar lead.", 500
 
-@app.route('/contato', methods=['GET','POST'])
+
+@app.route('/contato', methods=['GET', 'POST'])
 def contato():
     if request.method == 'GET':
         return render_template('contato.html')
     try:
         nome = request.form['nome']
         telefone = request.form['telefone']
-        mensagem = request.form.get('mensagem','')
-        novo_lead = Lead(nome=nome, telefone=telefone, mensagem=mensagem, imovel_id=None, data=datetime.now())
+        mensagem = request.form.get('mensagem', '')
+        novo_lead = Lead(nome=nome, telefone=telefone, mensagem=mensagem, data=datetime.now())
         db.session.add(novo_lead)
         db.session.commit()
-        return redirect(f"https://wa.me/5548991054216?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis.")
+        return redirect("https://wa.me/5548991054216?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis.")
     except Exception as e:
         print("❌ Erro ao enviar contato:", e)
         return "Erro ao enviar contato.", 500
+
+
+# ============================================================
+# BRANDINHO (IA básica)
+# ============================================================
 
 @app.route('/api/brandinho', methods=['POST'])
 def brandinho():
     data = request.get_json(force=True) or {}
     q = (data.get('q') or '').lower()
     answer = "Posso te ajudar a encontrar casas e apartamentos. Diga um bairro ou faixa de preço!"
+
     if 'canas' in q:
         found = Imovel.query.filter(Imovel.bairro.ilike('%canas%')).all()
         if found:
@@ -86,26 +107,36 @@ def brandinho():
             answer = f"Encontrei {len(found)} casas. Quer ver por bairro?"
     elif 'preço' in q or 'valor' in q or 'até' in q or 'ate' in q:
         answer = "Me diga um valor alvo, por exemplo: 'até 600 mil em Jurerê'."
+
     return jsonify({"answer": answer})
+
+
+# ============================================================
+# PAINEL ADMIN - IMÓVEIS
+# ============================================================
 
 @app.route('/admin')
 def admin():
-    q = request.args.get('q','')
+    q = request.args.get('q', '')
     base = Imovel.query
     if q:
         like = f"%{q}%"
         base = base.filter(
-            (Imovel.codigo.ilike(like)) | (Imovel.tipo.ilike(like)) |
-            (Imovel.bairro.ilike(like)) | (Imovel.descricao.ilike(like))
+            (Imovel.codigo.ilike(like)) |
+            (Imovel.tipo.ilike(like)) |
+            (Imovel.bairro.ilike(like)) |
+            (Imovel.descricao.ilike(like))
         )
     imoveis = base.order_by(Imovel.id.desc()).all()
     return render_template('admin.html', imoveis=imoveis, imovel=None)
+
 
 @app.route('/admin/edit/<int:id>')
 def admin_edit(id):
     imovel = Imovel.query.get(id)
     imoveis = Imovel.query.order_by(Imovel.id.desc()).all()
     return render_template('admin.html', imoveis=imoveis, imovel=imovel)
+
 
 @app.route('/admin/delete/<int:id>')
 def admin_delete(id):
@@ -115,15 +146,14 @@ def admin_delete(id):
         db.session.commit()
     return redirect('/admin')
 
+
 @app.route('/admin/save', methods=['POST'])
 def admin_save():
     form = request.form
     iid = form.get('id')
-    if iid:
-        obj = Imovel.query.get(int(iid))
-        if not obj: return redirect('/admin')
-    else:
-        obj = Imovel()
+
+    obj = Imovel.query.get(int(iid)) if iid else Imovel()
+    if not iid:
         db.session.add(obj)
 
     obj.codigo = form.get('codigo')
@@ -140,37 +170,39 @@ def admin_save():
     db.session.commit()
     return redirect('/admin')
 
+
 @app.route('/admin/export')
 def admin_export():
     si = StringIO()
     writer = csv.writer(si)
-    writer.writerow(['id','codigo','tipo','valor','bairro','descricao','imagem','status'])
+    writer.writerow(['id', 'codigo', 'tipo', 'valor', 'bairro', 'descricao', 'imagem', 'status'])
     for i in Imovel.query.order_by(Imovel.id).all():
-        writer.writerow([i.id, i.codigo, i.tipo, i.valor, i.bairro, (i.descricao or '').replace('\n',' '), i.imagem, i.status])
+        writer.writerow([i.id, i.codigo, i.tipo, i.valor, i.bairro, (i.descricao or '').replace('\n', ' '), i.imagem, i.status])
     output = si.getvalue().encode('utf-8')
-    return send_file(
-        io.BytesIO(output),
-        mimetype='text/csv',
-        as_attachment=True,
-        download_name='imoveis.csv'
-    )
+    return send_file(io.BytesIO(output), mimetype='text/csv', as_attachment=True, download_name='imoveis.csv')
+
 
 @app.route('/admin/import', methods=['POST'])
 def admin_import():
     file = request.files.get('csvfile')
-    if not file: return redirect('/admin')
+    if not file:
+        return redirect('/admin')
     stream = io.StringIO(file.stream.read().decode('utf-8'))
     reader = csv.DictReader(stream)
     count = 0
     for row in reader:
         codigo = row.get('codigo')
-        if not codigo: continue
+        if not codigo:
+            continue
         obj = Imovel.query.filter_by(codigo=codigo).first() or Imovel()
-        if not obj.id: db.session.add(obj)
+        if not obj.id:
+            db.session.add(obj)
         obj.codigo = codigo
         obj.tipo = row.get('tipo')
-        try: obj.valor = float(row.get('valor') or 0)
-        except: obj.valor = 0
+        try:
+            obj.valor = float(row.get('valor') or 0)
+        except:
+            obj.valor = 0
         obj.bairro = row.get('bairro')
         obj.descricao = row.get('descricao')
         obj.imagem = row.get('imagem')
@@ -180,31 +212,32 @@ def admin_import():
     print(f"✅ Importados/atualizados: {count}")
     return redirect('/admin')
 
+
+# ============================================================
+# SERVIÇOS (PÚBLICO E ADMIN)
+# ============================================================
+
 @app.route("/servicos", methods=["GET", "POST"])
 def servicos():
-    sucesso = False
-    erro = None
+    sucesso, erro = False, None
 
     if request.method == "POST":
         try:
-            # Captura dos dados do formulário
             nome = request.form.get("nome_cliente")
             telefone = request.form.get("telefone")
             imovel_id = request.form.get("imovel_id")
             tipo_servico = request.form.get("tipo_servico")
             descricao = request.form.get("descricao")
 
-            # Validação do ID do imóvel
             imovel_id = int(imovel_id) if imovel_id and imovel_id.isdigit() else None
 
-            # Criação do registro
             novo = Servico(
                 nome_cliente=nome,
                 telefone=telefone,
                 imovel_id=imovel_id,
                 tipo_servico=tipo_servico,
                 descricao=descricao,
-                data_solicitacao=datetime.datetime.now(),
+                data_solicitacao=datetime.now(),
                 status="pendente",
             )
 
@@ -217,28 +250,43 @@ def servicos():
             erro = str(e)
             print(f"❌ Erro ao salvar serviço: {erro}")
 
-    # Carrega imóveis ativos para o select do formulário
     imoveis = Imovel.query.filter_by(status="ativo").order_by(Imovel.id.desc()).all()
-
     return render_template("servicos.html", sucesso=sucesso, erro=erro, imoveis=imoveis)
 
 
 @app.route('/admin/servicos')
 def admin_servicos():
-    servicos = Servico.query.order_by(Servico.data_solicitacao.desc()).all()
+    servicos = (
+        db.session.query(Servico)
+        .outerjoin(Imovel)
+        .options(db.contains_eager(Servico.imovel))
+        .order_by(Servico.data_solicitacao.desc())
+        .all()
+    )
     return render_template('admin_servicos.html', servicos=servicos)
+
 
 @app.route('/admin/servicos/update/<int:id>', methods=['POST'])
 def update_servico(id):
     s = Servico.query.get(id)
+    if not s:
+        return redirect('/admin/servicos')
+
     s.status = request.form.get('status', s.status)
-    s.data_agendamento = datetime.strptime(request.form.get('data_agendamento'), "%Y-%m-%d") if request.form.get('data_agendamento') else s.data_agendamento
+    data_ag = request.form.get('data_agendamento')
+    if data_ag:
+        s.data_agendamento = datetime.strptime(data_ag, "%Y-%m-%d")
     s.responsavel = request.form.get('responsavel')
     s.custo = request.form.get('custo') or 0
     s.materiais = request.form.get('materiais')
+
     db.session.commit()
     return redirect('/admin/servicos')
 
+
+# ============================================================
+# RUN
+# ============================================================
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
