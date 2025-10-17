@@ -180,20 +180,48 @@ def admin_import():
     print(f"✅ Importados/atualizados: {count}")
     return redirect('/admin')
 
-@app.route('/servicos', methods=['GET', 'POST'])
+@app.route("/servicos", methods=["GET", "POST"])
 def servicos():
-    if request.method == 'POST':
-        novo = Servico(
-            nome_cliente=request.form['nome_cliente'],
-            telefone=request.form['telefone'],
-            imovel_id=request.form.get('imovel_id') or None,
-            tipo_servico=request.form['tipo_servico'],
-            descricao=request.form['descricao']
-        )
-        db.session.add(novo)
-        db.session.commit()
-        return render_template('servicos.html', sucesso=True)
-    return render_template('servicos.html', sucesso=False)
+    sucesso = False
+    erro = None
+
+    if request.method == "POST":
+        try:
+            # Captura dos dados do formulário
+            nome = request.form.get("nome_cliente")
+            telefone = request.form.get("telefone")
+            imovel_id = request.form.get("imovel_id")
+            tipo_servico = request.form.get("tipo_servico")
+            descricao = request.form.get("descricao")
+
+            # Validação do ID do imóvel
+            imovel_id = int(imovel_id) if imovel_id and imovel_id.isdigit() else None
+
+            # Criação do registro
+            novo = Servico(
+                nome_cliente=nome,
+                telefone=telefone,
+                imovel_id=imovel_id,
+                tipo_servico=tipo_servico,
+                descricao=descricao,
+                data_solicitacao=datetime.datetime.now(),
+                status="pendente",
+            )
+
+            db.session.add(novo)
+            db.session.commit()
+            sucesso = True
+
+        except Exception as e:
+            db.session.rollback()
+            erro = str(e)
+            print(f"❌ Erro ao salvar serviço: {erro}")
+
+    # Carrega imóveis ativos para o select do formulário
+    imoveis = Imovel.query.filter_by(status="ativo").order_by(Imovel.id.desc()).all()
+
+    return render_template("servicos.html", sucesso=sucesso, erro=erro, imoveis=imoveis)
+
 
 @app.route('/admin/servicos')
 def admin_servicos():
