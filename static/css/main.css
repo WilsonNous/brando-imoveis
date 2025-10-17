@@ -230,6 +230,74 @@ html, body {
 .text-brando { color: var(--brand-blue) !important; }
 .hover\:bg-brando-light:hover { background-color: var(--brand-light) !important; color: #fff !important; }
 
+/* =====================================================
+   Ajustes complementares para Admin e Serviços
+   ===================================================== */
+
+/* Botão secundário do painel admin */
+.btn-admin-sec {
+  background-color: #eab308; /* amarelo Tailwind 500 */
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+.btn-admin-sec:hover {
+  background-color: #ca8a04; /* amarelo Tailwind 600 */
+}
+
+/* Campos de formulário padrão (centralizado para todos os HTMLs) */
+.field {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+.field:focus {
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 2px rgba(85, 121, 133, 0.25);
+}
+
+/* Cabeçalhos fixos (como nos painéis e formulários) */
+.header-bar {
+  background-color: var(--brand-blue);
+  color: #fff;
+  font-weight: 600;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Tabelas administrativas */
+.table-brand th {
+  background-color: var(--brand-blue);
+  color: #fff;
+  font-weight: 600;
+}
+.table-brand td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.5rem;
+}
+.table-brand tr:hover {
+  background-color: #f3f4f6;
+}
+
+/* Botões pequenos para ações em tabelas */
+.btn-small {
+  background-color: var(--brand-blue);
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+.btn-small:hover {
+  background-color: var(--brand-blue-700);
+}
+
+
 .banner-content h2,
 .banner-content p {
   color: var(--brand-dark) !important;
