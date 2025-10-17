@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solicitar Serviço | Brando Imóveis</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="/static/css/main.css" rel="stylesheet" />
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <header class="bg-brand text-white p-4 text-center font-bold text-lg">
+    🛠️ Solicitação de Serviços - Brando Imóveis
+  </header>
+
+  <main class="max-w-3xl mx-auto p-6">
+    {% if sucesso %}
+      <div class="bg-green-100 border border-green-400 text-green-800 p-3 rounded-md text-center mb-4">
+        ✅ Solicitação enviada com sucesso! Entraremos em contato em breve.
+      </div>
+    {% endif %}
+
+    <form method="POST" class="bg-white shadow-md rounded-xl p-6 grid gap-3">
+      <input name="nome_cliente" placeholder="Seu nome completo" required class="field" />
+      <input name="telefone" placeholder="Seu WhatsApp" required class="field" />
+      <input name="imovel_id" placeholder="Código do imóvel (opcional)" class="field" />
+      <select name="tipo_servico" class="field">
+        <option value="">Selecione o tipo de serviço</option>
+        <option>Elétrica</option>
+        <option>Hidráulica</option>
+        <option>Pintura</option>
+        <option>Reforma</option>
+        <option>Manutenção geral</option>
+      </select>
+      <textarea name="descricao" placeholder="Descreva o serviço solicitado" class="field h-32"></textarea>
+      <button class="btn-brand w-full">Enviar Solicitação</button>
+    </form>
+  </main>
+
+  <footer class="text-white text-center py-4 mt-10 bg-brand">
+    © 2025 Brando Imóveis | CRECI 61150 | Desenvolvido por Nous Tecnologia
+  </footer>
+</body>
+</html>
