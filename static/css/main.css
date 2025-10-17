@@ -166,3 +166,36 @@ html, body {
   z-index: 99999;
   display: none;
 }
+
+/* Botões padrões reutilizáveis */
+.btn-admin {
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+}
+.btn-admin:hover {
+  background: #fff;
+  color: var(--brand-blue);
+}
+.btn-whatsapp {
+  background: var(--brand-green);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+.btn-whatsapp:hover {
+  background: #16a34a;
+}
+.btn-brand {
+  background: var(--brand-blue);
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+.btn-brand:hover {
+  background: var(--brand-blue-700);
+}
