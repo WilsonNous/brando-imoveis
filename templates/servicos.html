@@ -4,14 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Solicitar Serviço | Brando Imóveis</title>
+
+  <meta name="description" content="Solicite serviços, manutenções e reparos com a Brando Imóveis. Seguimos cuidando do seu imóvel mesmo após a compra!" />
+  <meta name="author" content="Brando Imóveis - CRECI 61150 | Desenvolvido por Nous Tecnologia" />
+
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="/static/css/main.css" rel="stylesheet" />
 </head>
+
 <body class="bg-gray-50 text-gray-800">
-  <header class="bg-brand text-white p-4 text-center font-bold text-lg">
-    🛠️ Solicitação de Serviços - Brando Imóveis
+
+  <!-- HEADER PADRÃO -->
+  <header class="text-white shadow bg-brando">
+    <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+      <a href="/" class="text-white underline hover:text-gray-200">← Voltar</a>
+      <h1 class="text-lg md:text-xl font-bold tracking-wide flex items-center gap-2">
+        🛠️ Solicitação de Serviços - Brando Imóveis
+      </h1>
+      <span></span>
+    </div>
   </header>
 
+  <!-- CONTEÚDO -->
   <main class="max-w-3xl mx-auto p-6">
     {% if sucesso %}
       <div class="bg-green-100 border border-green-400 text-green-800 p-3 rounded-md text-center mb-4">
@@ -20,10 +34,11 @@
     {% endif %}
 
     <form method="POST" class="bg-white shadow-md rounded-xl p-6 grid gap-3">
-      <input name="nome_cliente" placeholder="Seu nome completo" required class="field" />
-      <input name="telefone" placeholder="Seu WhatsApp" required class="field" />
-      <input name="imovel_id" placeholder="Código do imóvel (opcional)" class="field" />
-      <select name="tipo_servico" class="field">
+      <input name="nome_cliente" placeholder="Seu nome completo" required class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none" />
+      <input name="telefone" placeholder="Seu WhatsApp" required class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none" />
+      <input name="imovel_id" placeholder="Código do imóvel (opcional)" class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none" />
+
+      <select name="tipo_servico" class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none">
         <option value="">Selecione o tipo de serviço</option>
         <option>Elétrica</option>
         <option>Hidráulica</option>
@@ -31,13 +46,23 @@
         <option>Reforma</option>
         <option>Manutenção geral</option>
       </select>
-      <textarea name="descricao" placeholder="Descreva o serviço solicitado" class="field h-32"></textarea>
-      <button class="btn-brand w-full">Enviar Solicitação</button>
+
+      <textarea name="descricao" placeholder="Descreva o serviço solicitado" class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none h-32"></textarea>
+
+      <button class="bg-brando text-white py-2 rounded-md hover:bg-brando-light transition w-full font-semibold">
+        Enviar Solicitação
+      </button>
     </form>
   </main>
 
-  <footer class="text-white text-center py-4 mt-10 bg-brand">
-    © 2025 Brando Imóveis | CRECI 61150 | Desenvolvido por Nous Tecnologia
+  <!-- RODAPÉ -->
+  <footer class="text-white text-center py-6 mt-10 bg-brando">
+    <p class="text-sm mb-1">📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis</p>
+    <p class="text-xs opacity-90">
+      © 2025 Brando Imóveis | CRECI 61150<br>
+      Desenvolvido por <span class="font-semibold">Nous Tecnologia</span>
+    </p>
   </footer>
+
 </body>
 </html>
