@@ -5,12 +5,41 @@ import csv
 import config
 from models import db, Imovel, Lead, Servico
 import io
+import logging
+from sqlalchemy.pool import QueuePool
+
+# ============================================================
+# INICIALIZAÇÃO FLASK + BANCO
+# ============================================================
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = config.SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFICATIONS
 app.secret_key = config.SECRET_KEY
+
+# 🔧 Engine Options (mantém conexão estável com MySQL HostGator)
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,          # reconecta automaticamente se o servidor fechar a sessão
+    "pool_recycle": 280,            # renova conexão antes do timeout do HostGator (~5min)
+    "pool_size": 5,                 # tamanho do pool
+    "max_overflow": 10,             # conexões extras temporárias
+    "poolclass": QueuePool,         # pool com fila (seguro para produção)
+    "connect_args": {"connect_timeout": 10},  # evita travas longas
+}
+
+# Inicializa o banco com as opções acima
 db.init_app(app)
+
+# ============================================================
+# LOGGING ESTRUTURADO
+# ============================================================
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+app.logger.info("🚀 Brando Imóveis iniciado com pool seguro de conexão MySQL.")
+
 
 # ============================================================
 # PÁGINAS PÚBLICAS
