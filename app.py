@@ -112,31 +112,17 @@ def contato():
 # ============================================================
 # BRANDINHO (IA básica)
 # ============================================================
+from brandinho_brain import responder
 
 @app.route('/api/brandinho', methods=['POST'])
 def brandinho():
     data = request.get_json(force=True) or {}
-    q = (data.get('q') or '').lower()
-    answer = "Posso te ajudar a encontrar casas e apartamentos. Diga um bairro ou faixa de preço!"
-
-    if 'canas' in q:
-        found = Imovel.query.filter(Imovel.bairro.ilike('%canas%')).all()
-        if found:
-            cards = ', '.join([f"{x.tipo} {x.codigo} (R$ {x.valor:,.0f})" for x in found])
-            answer = f"Tenho estas opções em Canasvieiras: {cards}. Você pode ver mais na página inicial."
-        else:
-            answer = "No momento não encontrei imóveis em Canasvieiras. Quer tentar outro bairro?"
-    elif 'apart' in q or 'apto' in q:
-        found = Imovel.query.filter(Imovel.tipo.ilike('%apart%')).all()
-        if found:
-            answer = f"Encontrei {len(found)} apartamentos. Use a busca na página ou diga um bairro."
-    elif 'casa' in q:
-        found = Imovel.query.filter(Imovel.tipo.ilike('%casa%')).all()
-        if found:
-            answer = f"Encontrei {len(found)} casas. Quer ver por bairro?"
-    elif 'preço' in q or 'valor' in q or 'até' in q or 'ate' in q:
-        answer = "Me diga um valor alvo, por exemplo: 'até 600 mil em Jurerê'."
-
+    q = (data.get('q') or '')
+    try:
+        answer = responder(q)
+    except Exception as e:
+        print(f"❌ Erro no Brandinho: {e}")
+        answer = "Tive um probleminha para processar agora 😅, tente novamente daqui a pouco."
     return jsonify({"answer": answer})
 
 
