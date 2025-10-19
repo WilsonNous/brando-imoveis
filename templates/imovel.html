@@ -1,87 +1,46 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ imovel.tipo }} - {{ imovel.bairro }} | Brando Imóveis</title>
+{% extends "base.html" %}
 
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link href="/static/css/main.css" rel="stylesheet" />
+{% block title %}{{ imovel.tipo }} - {{ imovel.bairro }} | Brando Imóveis{% endblock %}
 
-  <meta name="author" content="Brando Imóveis - CRECI 61150" />
-  <meta name="description" content="Brando Imóveis | CRECI 61150 | Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis. 'Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.' Provérbios 16:3" />
+{% block content %}
+<main class="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-6">
 
-  <style>
-    /* === Paleta Brando aplicada (sobrescreve Tailwind) === */
-    .bg-blue-700, .bg-blue-800 {
-      background-color: #557985 !important;
-      color: #fff !important;
-    }
-    .hover\:bg-blue-800:hover {
-      background-color: #88A9B9 !important;
-      color: #fff !important;
-    }
-    .text-blue-700, .text-blue-800 {
-      color: #557985 !important;
-    }
-    footer.bg-blue-800 {
-      background-color: #557985 !important;
-    }
-  </style>
-</head>
+  <!-- IMAGEM PRINCIPAL -->
+  <div>
+    <img src="{{ imovel.imagem or 'https://picsum.photos/900/700?blur=1' }}" 
+         class="w-full rounded-xl shadow-lg object-cover"
+         alt="Imagem principal do imóvel {{ imovel.codigo }}">
+  </div>
 
-<body class="bg-gray-50 text-gray-800">
-
-  <!-- HEADER -->
-  <header class="bg-blue-700 text-white">
-    <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
-      <a href="/" class="text-white underline hover:text-gray-200">← Voltar</a>
-      <h1 class="text-xl font-bold tracking-wide">Detalhes do Imóvel</h1>
-      <span></span>
-    </div>
-  </header>
-
-  <!-- CONTEÚDO -->
-  <main class="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-6">
-    <div>
-      <img src="{{ imovel.imagem or 'https://picsum.photos/900/700?blur=1' }}" 
-           class="w-full rounded-xl shadow-lg object-cover"
-           alt="Imagem principal do imóvel {{ imovel.codigo }}">
-    </div>
-
-    <div>
-      <h2 class="text-2xl font-bold text-blue-700 mb-1">{{ imovel.tipo }} - {{ imovel.bairro }}</h2>
-      <p class="text-2xl price mb-3">R$ {{ '{:,.2f}'.format(imovel.valor) }}</p>
-      <p class="text-gray-700 leading-relaxed mb-5">{{ imovel.descricao }}</p>
-
-      <form action="/lead" method="POST" class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-        <input type="hidden" name="imovel_id" value="{{ imovel.id }}">
-        <div class="grid grid-cols-1 gap-3">
-          <input name="nome" placeholder="Seu nome" required 
-                 class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none" />
-          <input name="telefone" placeholder="WhatsApp" required 
-                 class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none" />
-          <textarea name="mensagem" placeholder="Mensagem (opcional)" 
-                    class="border p-2 rounded-md focus:ring-2 focus:ring-blue-600 outline-none"></textarea>
-          <button class="bg-green-500 hover:bg-green-600 text-white py-2 rounded-md transition">Falar no WhatsApp</button>
-        </div>
-      </form>
-    </div>
-  </main>
-
-  <!-- RODAPÉ -->
-  <footer class="bg-blue-800 text-white text-center py-6 mt-10">
-    <p class="text-sm mb-1">📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis</p>
-    <p class="text-sm italic mb-2">
-      “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.”<br>
-      <span class="opacity-80">Provérbios 16:3</span>
+  <!-- DETALHES DO IMÓVEL -->
+  <div>
+    <h2 class="text-2xl font-bold text-[color:var(--brand-blue)] mb-1">
+      {{ imovel.tipo }} - {{ imovel.bairro }}
+    </h2>
+    <p class="text-2xl price mb-3 font-semibold text-gray-800">
+      R$ {{ '{:,.2f}'.format(imovel.valor) }}
     </p>
-    <p class="text-xs opacity-90">
-      © 2025 Brando Imóveis | CRECI 61150<br>
-      Desenvolvido por <span class="font-semibold">Nous Tecnologia</span>
-    </p>
-  </footer>
 
-  <script src="/static/js/script.js"></script>
-</body>
-</html>
+    <p class="text-gray-700 leading-relaxed mb-5">{{ imovel.descricao }}</p>
+
+    <a href="/" class="inline-block mb-4 text-[color:var(--brand-blue)] underline hover:opacity-80">
+      ← Voltar à listagem
+    </a>
+
+    <!-- FORMULÁRIO DE LEAD -->
+    <form action="/lead" method="POST" 
+          class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <input type="hidden" name="imovel_id" value="{{ imovel.id }}">
+      <div class="grid grid-cols-1 gap-3">
+        <input name="nome" placeholder="Seu nome" required 
+               class="field" />
+        <input name="telefone" placeholder="WhatsApp" required 
+               class="field" />
+        <textarea name="mensagem" placeholder="Mensagem (opcional)" class="field h-24"></textarea>
+        <button class="btn-brand w-full font-semibold">Falar no WhatsApp</button>
+      </div>
+    </form>
+  </div>
+
+</main>
+{% endblock %}
