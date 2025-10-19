@@ -1,55 +1,39 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Contato | Brando Imóveis</title>
+{% extends "base.html" %}
 
-  <meta name="author" content="Brando Imóveis - CRECI 61150" />
-  <meta name="description" content="Brando Imóveis | CRECI 61150 | Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis. 'Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.' Provérbios 16:3" />
+{% block title %}Contato | Brando Imóveis{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link href="/static/css/main.css" rel="stylesheet" />
-</head>
+{% block content %}
+<main class="max-w-4xl mx-auto p-6">
+  <a href="/" class="text-[color:var(--brand-blue)] underline hover:opacity-80 inline-block mb-4">← Voltar</a>
 
-<body class="bg-gray-50 text-gray-800">
+  <h2 class="text-center text-2xl font-bold text-[color:var(--brand-blue)] mb-4">📞 Fale Conosco</h2>
+  <p class="text-center text-gray-600 mb-6">
+    Escolha uma das opções abaixo ou preencha o formulário que entraremos em contato.
+  </p>
 
-  <!-- HEADER PADRÃO -->
-  <header class="header-bar flex justify-between items-center px-6">
-    <a href="/" class="btn-admin-sec">← Voltar</a>
-    <h1 class="text-lg md:text-xl font-bold tracking-wide">📞 Contato - Brando Imóveis</h1>
-    <span></span>
-  </header>
+  <!-- ===================================================== -->
+  <!-- CONTATOS DIRETOS -->
+  <!-- ===================================================== -->
+  <div class="flex flex-col md:flex-row justify-center gap-4 mb-8 text-center">
+    <a href="https://wa.me/554891054216" target="_blank"
+       class="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-3 rounded-md shadow transition w-full md:w-auto">
+      💬 WhatsApp: (48) 9105-4216
+    </a>
+    <a href="tel:+5548991054216"
+       class="flex items-center justify-center gap-2 bg-[color:var(--brand-blue)] hover:bg-[color:var(--brand-blue-700)] text-white px-5 py-3 rounded-md shadow transition w-full md:w-auto">
+      ☎️ Ligar: (48) 99105-4216
+    </a>
+  </div>
 
-  <!-- CONTEÚDO -->
-  <main class="max-w-3xl mx-auto p-6">
-    <h2 class="text-center text-2xl font-bold text-[color:var(--brand-blue)] mb-4">Fale Conosco</h2>
-    <p class="text-center text-gray-600 mb-6">
-      Preencha o formulário abaixo e retornaremos o mais breve possível.
-    </p>
-
-    <form action="/contato" method="POST" class="bg-white shadow-md rounded-xl p-6 grid gap-3">
-      <input name="nome" placeholder="Seu nome" required class="field" />
-      <input name="telefone" placeholder="WhatsApp" required class="field" />
-      <input name="email" placeholder="Email (opcional)" class="field" />
-      <textarea name="mensagem" placeholder="Como podemos ajudar?" class="field h-32"></textarea>
-      <button class="btn-brand w-full font-semibold">Enviar Mensagem</button>
-    </form>
-  </main>
-
-  <!-- RODAPÉ -->
-  <footer class="text-white text-center py-6 mt-10 bg-[color:var(--brand-blue)]">
-    <p class="text-sm mb-1">
-      📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis
-    </p>
-    <p class="text-sm italic mb-2">
-      “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.”<br>
-      <span class="opacity-80">Provérbios 16:3</span>
-    </p>
-    <p class="text-xs opacity-90">
-      © 2025 Brando Imóveis | CRECI 61150<br>
-      Desenvolvido por <span class="font-semibold">Nous Tecnologia</span>
-    </p>
-  </footer>
-</body>
-</html>
+  <!-- ===================================================== -->
+  <!-- FORMULÁRIO DE CONTATO -->
+  <!-- ===================================================== -->
+  <form action="/contato" method="POST" class="bg-white shadow-md rounded-xl p-6 grid gap-3 max-w-2xl mx-auto">
+    <input name="nome" placeholder="Seu nome" required class="field" />
+    <input name="telefone" placeholder="WhatsApp" required class="field" />
+    <input name="email" placeholder="Email (opcional)" class="field" />
+    <textarea name="mensagem" placeholder="Como podemos ajudar?" class="field h-32"></textarea>
+    <button class="btn-brand w-full font-semibold">Enviar Mensagem</button>
+  </form>
+</main>
+{% endblock %}
