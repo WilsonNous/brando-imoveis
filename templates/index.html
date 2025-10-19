@@ -1,36 +1,8 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brando Imóveis</title>
+{% extends "base.html" %}
 
-  <meta name="description" content="Brando Imóveis | CRECI 61150 | Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis. Encontre casas, apartamentos e imóveis com propósito." />
-  <meta name="author" content="Brando Imóveis - CRECI 61150 | Desenvolvido por Nous Tecnologia" />
+{% block title %}Brando Imóveis | Página Inicial{% endblock %}
 
-  <!-- Tailwind + CSS principal -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link href="/static/css/main.css" rel="stylesheet" />
-</head>
-
-<body class="bg-gray-50 text-gray-800">
-
-  <!-- ===================================================== -->
-  <!-- HEADER -->
-  <!-- ===================================================== -->
-  <header class="text-white shadow bg-[color:var(--brand-blue)]">
-    <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
-      <div class="flex items-center gap-3">
-        <img src="/static/img/brando_logo.png" alt="Brando Imóveis" class="h-10">
-        <h1 class="text-2xl font-bold tracking-wide">Brando Imóveis</h1>
-      </div>
-      <div class="flex gap-2">
-        <a href="/admin" class="btn-admin">Admin</a>
-        <a href="/servicos" class="btn-admin">Serviços</a>
-        <a href="https://wa.me/554891054216" target="_blank" class="btn-whatsapp">📱 Fale Conosco</a>
-      </div>
-    </div>
-  </header>
+{% block content %}
 
   <!-- ===================================================== -->
   <!-- BANNER PRINCIPAL -->
@@ -106,42 +78,4 @@
     </a>
   </section>
 
-  <!-- ===================================================== -->
-  <!-- RODAPÉ -->
-  <!-- ===================================================== -->
-  <footer class="text-white text-center py-6 mt-10 bg-[color:var(--brand-blue)]">
-    <p class="text-sm mb-1">📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis</p>
-    <p class="text-sm italic mb-2">
-      “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.”<br>
-      <span class="opacity-80">Provérbios 16:3</span>
-    </p>
-    <p class="text-xs opacity-90">
-      © 2025 Brando Imóveis | CRECI 61150<br>
-      Desenvolvido por <span class="font-semibold">Nous Tecnologia</span>
-    </p>
-  </footer>
-
-  <!-- ===================================================== -->
-  <!-- BRANDINHO (Assistente) -->
-  <!-- ===================================================== -->
-  <button id="brandinho-toggle">💬 Falar com o Brandinho</button>
-  <div id="brandinho-box" aria-live="polite">
-    <div id="brandinho-header">
-      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Brando" alt="Brandinho">
-      <div>
-        <div class="font-semibold">Brandinho</div>
-        <div class="text-sm opacity-90">Assistente virtual da Brando Imóveis</div>
-      </div>
-    </div>
-    <div id="brandinho-messages"></div>
-    <div id="brandinho-input">
-      <input id="brandinho-text" placeholder="Ex.: apartamento até 600 mil em Canasvieiras" />
-      <button id="brandinho-send">Enviar</button>
-    </div>
-  </div>
-
-  <!-- Toast e JS -->
-  <div class="toast"></div>
-  <script src="/static/js/script.js"></script>
-</body>
-</html>
+{% endblock %}
