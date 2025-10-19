@@ -12,21 +12,31 @@
   <link href="/static/css/main.css" rel="stylesheet" />
 </head>
 
-<body class="bg-gray-50 text-gray-900">
+<body class="bg-gray-50 text-gray-900 font-sans">
 
+  <!-- ===================================================== -->
   <!-- HEADER -->
-  <header class="header-bar flex justify-between items-center px-6">
-    <h1 class="text-xl font-bold flex items-center gap-2">
-      🛠️ Painel de Serviços - Brando Imóveis
-    </h1>
-    <a href="/admin" class="btn-admin-sec">← Voltar ao painel principal</a>
+  <!-- ===================================================== -->
+  <header class="bg-[color:var(--brand-blue)] text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center p-4 gap-2">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        🛠️ Painel de Serviços — Brando Imóveis
+      </h1>
+      <div class="flex gap-2">
+        <a href="/admin" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          ← Voltar ao painel principal
+        </a>
+      </div>
+    </div>
   </header>
 
+  <!-- ===================================================== -->
   <!-- CONTEÚDO -->
+  <!-- ===================================================== -->
   <main class="max-w-7xl mx-auto p-6">
-    <div class="bg-white rounded-xl shadow overflow-hidden">
-      <table class="min-w-full table-brand text-sm">
-        <thead>
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+      <table class="min-w-full text-sm">
+        <thead class="bg-[color:var(--brand-blue)] text-white text-left">
           <tr>
             <th class="py-2 px-3">#</th>
             <th class="py-2 px-3">Cliente</th>
@@ -38,18 +48,18 @@
             <th class="py-2 px-3">Ações</th>
           </tr>
         </thead>
+
         <tbody>
           {% for s in servicos %}
-          <tr>
+          <tr class="border-b hover:bg-gray-50 transition">
             <td class="py-2 px-3">{{ s.id }}</td>
             <td class="py-2 px-3 font-semibold">{{ s.nome_cliente }}</td>
 
-            <!-- Mostra o imóvel vinculado -->
+            <!-- Imóvel vinculado -->
             <td class="py-2 px-3 text-gray-700">
               {% if s.imovel %}
-                <span class="font-medium text-[color:var(--brand-blue)]">
-                  {{ s.imovel.codigo }}
-                </span> – {{ s.imovel.tipo }}<br>
+                <span class="font-medium text-[color:var(--brand-blue)]">{{ s.imovel.codigo }}</span>
+                — {{ s.imovel.tipo }}<br>
                 <small class="text-gray-500">{{ s.imovel.bairro }}</small>
               {% else %}
                 <span class="text-gray-400 italic">Sem vínculo</span>
@@ -72,6 +82,7 @@
               </span>
             </td>
 
+            <!-- Formulário de atualização -->
             <td class="py-2 px-3">
               <form method="POST" action="/admin/servicos/update/{{ s.id }}" class="grid grid-cols-1 gap-1">
                 <input name="responsavel" placeholder="Responsável" value="{{ s.responsavel or '' }}" class="field text-xs" />
@@ -83,7 +94,7 @@
                   <option {% if s.status=='andamento' %}selected{% endif %}>andamento</option>
                   <option {% if s.status=='concluido' %}selected{% endif %}>concluido</option>
                 </select>
-                <button class="btn-small">Salvar</button>
+                <button class="btn-small w-full">💾 Salvar</button>
               </form>
             </td>
           </tr>
@@ -93,8 +104,10 @@
     </div>
   </main>
 
+  <!-- ===================================================== -->
   <!-- RODAPÉ -->
-  <footer class="text-center text-sm text-gray-600 mt-8 italic">
+  <!-- ===================================================== -->
+  <footer class="text-center text-sm text-gray-600 mt-8 italic py-4 border-t border-gray-200">
     “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.” — Provérbios 16:3
   </footer>
 
