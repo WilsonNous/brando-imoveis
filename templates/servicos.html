@@ -12,31 +12,45 @@
   <link href="/static/css/main.css" rel="stylesheet" />
 </head>
 
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-50 text-gray-800 font-sans">
 
+  <!-- ===================================================== -->
   <!-- HEADER PADRÃO -->
-  <header class="header-bar flex justify-between items-center px-6">
-    <a href="/" class="btn-admin-sec">← Voltar</a>
-    <h1 class="text-lg md:text-xl font-bold tracking-wide flex items-center gap-2">
-      🛠️ Solicitação de Serviços - Brando Imóveis
-    </h1>
-    <span></span>
+  <!-- ===================================================== -->
+  <header class="bg-[color:var(--brand-blue)] text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex justify-between items-center p-4">
+      <a href="/" class="bg-white text-[color:var(--brand-blue)] px-4 py-2 rounded-md hover:bg-gray-100 transition">
+        ← Voltar
+      </a>
+      <h1 class="text-lg md:text-xl font-bold tracking-wide flex items-center gap-2">
+        🛠️ Solicitação de Serviços — Brando Imóveis
+      </h1>
+      <span></span>
+    </div>
   </header>
 
+  <!-- ===================================================== -->
   <!-- CONTEÚDO -->
+  <!-- ===================================================== -->
   <main class="max-w-3xl mx-auto p-6">
 
+    <!-- ALERTAS -->
     {% if erro %}
-      <div class="bg-red-100 border border-red-400 text-red-800 p-3 rounded-md text-center mb-4">
-        ⚠️ Ocorreu um erro ao enviar: {{ erro }}
+      <div class="bg-red-100 border border-red-400 text-red-800 p-3 rounded-md text-center mb-4 shadow-sm">
+        ⚠️ Ocorreu um erro ao enviar: <span class="font-semibold">{{ erro }}</span>
       </div>
     {% elif sucesso %}
-      <div class="bg-green-100 border border-green-400 text-green-800 p-3 rounded-md text-center mb-4">
+      <div class="bg-green-100 border border-green-400 text-green-800 p-3 rounded-md text-center mb-4 shadow-sm">
         ✅ Solicitação enviada com sucesso! Entraremos em contato em breve.
       </div>
     {% endif %}
 
-    <form method="POST" class="bg-white shadow-md rounded-xl p-6 grid gap-3">
+    <p class="text-center text-gray-600 mb-6">
+      Informe os detalhes do serviço que você precisa. A Brando continua cuidando do seu imóvel com atenção e qualidade 💙
+    </p>
+
+    <!-- FORMULÁRIO -->
+    <form method="POST" class="bg-white shadow-md rounded-xl p-6 grid gap-3 border border-gray-100">
       <input name="nome_cliente" placeholder="Seu nome completo" required class="field" />
       <input name="telefone" placeholder="Seu WhatsApp" required class="field" />
 
@@ -61,11 +75,21 @@
 
       <textarea name="descricao" placeholder="Descreva o serviço solicitado" class="field h-32"></textarea>
 
-      <button class="btn-brand w-full font-semibold">Enviar Solicitação</button>
+      <button class="btn-brand w-full font-semibold text-lg">Enviar Solicitação</button>
     </form>
+
+    <!-- CONTATOS DIRETOS (reforço de confiança) -->
+    <div class="text-center mt-8 text-gray-700">
+      <p class="mb-2 font-semibold text-[color:var(--brand-blue)]">Precisa de ajuda imediata?</p>
+      <a href="https://wa.me/554891054216" target="_blank" class="inline-block bg-green-500 hover:bg-green-600 text-white px-5 py-2 rounded-md transition">
+        💬 WhatsApp: (48) 9105-4216
+      </a>
+    </div>
   </main>
 
+  <!-- ===================================================== -->
   <!-- RODAPÉ -->
+  <!-- ===================================================== -->
   <footer class="text-white text-center py-6 mt-10 bg-[color:var(--brand-blue)]">
     <p class="text-sm mb-1">📍 Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis</p>
     <p class="text-xs opacity-90">
