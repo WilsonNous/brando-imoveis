@@ -298,6 +298,10 @@ def update_servico(id):
     db.session.commit()
     return redirect('/admin/servicos')
 
+@app.route('/temporada')
+def temporada():
+    imoveis = Imovel.query.filter(Imovel.status == 'ativo').all()
+    return render_template('temporada.html', imoveis=imoveis)
 
 # ============================================================
 # RUN
