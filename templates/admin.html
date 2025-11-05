@@ -122,7 +122,10 @@
               <td class="py-2 px-2 font-semibold">{{ i.codigo }}</td>
               <td class="py-2 px-2">{{ i.tipo }}</td>
               <td class="py-2 px-2">{{ i.bairro }}</td>
-              <td class="py-2 px-2 text-[color:var(--brand-blue)] font-semibold">R$ {{ '{:,.2f}'.format(i.valor) }}</td>
+
+              <!-- 💰 Valor formatado no padrão BRL -->
+              <td class="py-2 px-2 text-[color:var(--brand-blue)] font-semibold">{{ i.valor | brl }}</td>
+
               <td class="py-2 px-2">{{ i.status }}</td>
     
               <td class="py-2 px-2 flex gap-3">
