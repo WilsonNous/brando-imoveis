@@ -41,22 +41,39 @@
   <!-- CONTEÚDO PRINCIPAL -->
   <!-- ===================================================== -->
   <main class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
-    
+
     <!-- FORMULÁRIO -->
     <section class="md:col-span-1 bg-white p-4 rounded-xl shadow-md border border-gray-100">
       <h2 class="font-semibold mb-3 text-[color:var(--brand-blue)] text-lg">Cadastrar / Editar Imóvel</h2>
-      <form action="/admin/save" method="post" class="grid gap-3">
+
+      <form action="/admin/save" method="post" enctype="multipart/form-data" class="grid gap-3">
         <input type="hidden" name="id" value="{{ imovel.id if imovel else '' }}">
+
         <input name="codigo" placeholder="Código (ex: A001)" value="{{ imovel.codigo if imovel else '' }}" required class="field">
         <input name="tipo" placeholder="Tipo (Casa, Apto...)" value="{{ imovel.tipo if imovel else '' }}" required class="field">
         <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="field">
         <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="field">
-        <input name="imagem" placeholder="URL da imagem (https://...)" value="{{ imovel.imagem if imovel else '' }}" class="field">
+
+        <!-- UPLOAD DE IMAGEM -->
+        <label class="text-sm font-semibold text-gray-600">Imagem do imóvel</label>
+        <input type="file" name="imagem_file" id="imagem_file" accept="image/*"
+               class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none bg-gray-50">
+
+        <!-- Preview -->
+        <img id="preview" src="{{ imovel.imagem if imovel and imovel.imagem else '' }}"
+             alt="Preview da imagem"
+             class="rounded-md shadow-md mt-2 w-full max-h-48 object-cover {% if not imovel or not imovel.imagem %}hidden{% endif %}">
+
+        <!-- Campo opcional de URL -->
+        <input name="imagem" placeholder="Ou insira URL manual (https://...)" value="{{ imovel.imagem if imovel else '' }}" class="field">
+
         <textarea name="descricao" placeholder="Descrição" class="field h-24">{{ imovel.descricao if imovel else '' }}</textarea>
+
         <select name="status" class="field">
           <option value="ativo" {{ 'selected' if (imovel and imovel.status=='ativo') else '' }}>Ativo</option>
           <option value="inativo" {{ 'selected' if (imovel and imovel.status=='inativo') else '' }}>Inativo</option>
         </select>
+
         <button class="btn-brand w-full font-semibold">💾 Salvar</button>
       </form>
     </section>
@@ -109,5 +126,27 @@
   <footer class="text-center text-sm text-gray-600 mt-8 italic py-4 border-t border-gray-200">
     “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.” — Provérbios 16:3
   </footer>
+
+  <!-- ===================================================== -->
+  <!-- JAVASCRIPT - PREVIEW DA IMAGEM -->
+  <!-- ===================================================== -->
+  <script>
+    const inputFile = document.getElementById("imagem_file");
+    const previewImg = document.getElementById("preview");
+
+    if (inputFile) {
+      inputFile.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            previewImg.classList.remove("hidden");
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  </script>
 </body>
 </html>
