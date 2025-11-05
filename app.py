@@ -331,11 +331,18 @@ def update_servico(id):
     if data_ag:
         s.data_agendamento = datetime.strptime(data_ag, "%Y-%m-%d")
     s.responsavel = request.form.get('responsavel')
-    s.custo = request.form.get('custo') or 0
     s.materiais = request.form.get('materiais')
+
+    # 💰 Aceita tanto vírgula quanto ponto
+    custo = request.form.get('custo', '0').replace(',', '.')
+    try:
+        s.custo = float(custo)
+    except ValueError:
+        s.custo = 0.0
 
     db.session.commit()
     return redirect('/admin/servicos')
+
 
 # ============================================================
 # PÁGINA DE TEMPORADA
