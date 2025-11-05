@@ -19,6 +19,18 @@ app.config["SQLALCHEMY_DATABASE_URI"] = config.SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFICATIONS
 app.secret_key = config.SECRET_KEY
 
+# ============================================================
+# FILTRO DE FORMATAÇÃO MONETÁRIA (pt-BR)
+# ============================================================
+@app.template_filter('brl')
+def format_brl(value):
+    """Formata número no padrão monetário brasileiro."""
+    try:
+        value = float(value)
+        return f"R$ {value:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+    except (ValueError, TypeError):
+        return "R$ 0,00"
+
 # 🔧 Engine Options (mantém conexão estável com MySQL HostGator)
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
