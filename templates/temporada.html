@@ -74,12 +74,22 @@
           </div>
           <div class="p-4">
             <h3 class="text-xl font-semibold text-[color:var(--brand-blue)] mb-1">{{ i.tipo }} - {{ i.bairro }}</h3>
-            <p class="text-gray-700 price mb-2 font-bold">Diária: R$ {{ '{:,.2f}'.format(i.valor) }}</p>
-            <p class="text-sm text-gray-500 mb-3">{{ (i.descricao or '')[:110] }}{% if i.descricao and i.descricao|length > 110 %}...{% endif %}</p>
+
+            <!-- 💰 Valor formatado em BRL -->
+            <p class="text-gray-700 price mb-2 font-bold">Diária: {{ i.valor | brl }}</p>
+
+            <p class="text-sm text-gray-500 mb-3">
+              {{ (i.descricao or '')[:110] }}{% if i.descricao and i.descricao|length > 110 %}...{% endif %}
+            </p>
+
             <div class="flex items-center justify-between">
-              <a href="/imovel/{{ i.id }}" class="inline-block bg-[color:var(--brand-blue)] text-white px-4 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">Ver detalhes</a>
+              <a href="/imovel/{{ i.id }}" class="inline-block bg-[color:var(--brand-blue)] text-white px-4 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">
+                Ver detalhes
+              </a>
               <button class="text-sm underline text-[color:var(--brand-blue)]"
-                      data-whats="Olá! Tenho interesse em alugar o imóvel {{ i.codigo }} para temporada.">Copiar msg WhatsApp</button>
+                      data-whats="Olá! Tenho interesse em alugar o imóvel {{ i.codigo }} para temporada.">
+                      Copiar msg WhatsApp
+              </button>
             </div>
           </div>
         </div>
