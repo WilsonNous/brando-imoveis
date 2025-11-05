@@ -7,6 +7,8 @@ from models import db, Imovel, Lead, Servico
 import io
 import logging
 from sqlalchemy.pool import QueuePool
+import os
+from werkzeug.utils import secure_filename
 
 # ============================================================
 # INICIALIZAÇÃO FLASK + BANCO
@@ -19,27 +21,36 @@ app.secret_key = config.SECRET_KEY
 
 # 🔧 Engine Options (mantém conexão estável com MySQL HostGator)
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_pre_ping": True,          # reconecta automaticamente se o servidor fechar a sessão
-    "pool_recycle": 280,            # renova conexão antes do timeout do HostGator (~5min)
-    "pool_size": 5,                 # tamanho do pool
-    "max_overflow": 10,             # conexões extras temporárias
-    "poolclass": QueuePool,         # pool com fila (seguro para produção)
-    "connect_args": {"connect_timeout": 10},  # evita travas longas
+    "pool_pre_ping": True,
+    "pool_recycle": 280,
+    "pool_size": 5,
+    "max_overflow": 10,
+    "poolclass": QueuePool,
+    "connect_args": {"connect_timeout": 10},
 }
 
-# Inicializa o banco com as opções acima
 db.init_app(app)
+
+# ============================================================
+# CONFIGURAÇÃO DE UPLOAD DE IMAGENS
+# ============================================================
+
+UPLOAD_FOLDER = os.path.join("static", "uploads")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    """Verifica se o arquivo tem extensão permitida"""
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # ============================================================
 # LOGGING ESTRUTURADO
 # ============================================================
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 app.logger.info("🚀 Brando Imóveis iniciado com pool seguro de conexão MySQL.")
-
 
 # ============================================================
 # PÁGINAS PÚBLICAS
@@ -51,7 +62,7 @@ def home():
         imoveis = Imovel.query.filter_by(status='ativo').all()
         return render_template('index.html', imoveis=imoveis)
     except Exception as e:
-        print("❌ Erro ao consultar imóveis:", e)
+        app.logger.error(f"❌ Erro ao consultar imóveis: {e}")
         return "Erro ao conectar ao banco de dados.", 500
 
 
@@ -61,7 +72,6 @@ def imovel_detalhe(id):
     if not imovel:
         return "Imóvel não encontrado.", 404
     return render_template('imovel.html', imovel=imovel)
-
 
 # ============================================================
 # LEADS E CONTATOS
@@ -88,7 +98,7 @@ def lead():
         msg = f"Olá! Tenho interesse no imóvel código {imovel_id}" if imovel_id else "Olá! Tenho interesse em imóveis da Brando."
         return redirect(f"https://wa.me/5548991054216?text={msg}")
     except Exception as e:
-        print("❌ Erro ao registrar lead:", e)
+        app.logger.error(f"❌ Erro ao registrar lead: {e}")
         return "Erro ao enviar lead.", 500
 
 
@@ -105,9 +115,8 @@ def contato():
         db.session.commit()
         return redirect("https://wa.me/5548991054216?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis.")
     except Exception as e:
-        print("❌ Erro ao enviar contato:", e)
+        app.logger.error(f"❌ Erro ao enviar contato: {e}")
         return "Erro ao enviar contato.", 500
-
 
 # ============================================================
 # BRANDINHO (IA básica)
@@ -121,10 +130,9 @@ def brandinho():
     try:
         answer = responder(q)
     except Exception as e:
-        print(f"❌ Erro no Brandinho: {e}")
+        app.logger.error(f"❌ Erro no Brandinho: {e}")
         answer = "Tive um probleminha para processar agora 😅, tente novamente daqui a pouco."
     return jsonify({"answer": answer})
-
 
 # ============================================================
 # PAINEL ADMIN - IMÓVEIS
@@ -161,10 +169,13 @@ def admin_delete(id):
         db.session.commit()
     return redirect('/admin')
 
-
+# ============================================================
+# NOVA ROTA /admin/save COM UPLOAD DE IMAGEM
+# ============================================================
 @app.route('/admin/save', methods=['POST'])
 def admin_save():
     form = request.form
+    file = request.files.get('imagem_file')
     iid = form.get('id')
 
     obj = Imovel.query.get(int(iid)) if iid else Imovel()
@@ -173,18 +184,32 @@ def admin_save():
 
     obj.codigo = form.get('codigo')
     obj.tipo = form.get('tipo')
+    obj.bairro = form.get('bairro')
+    obj.descricao = form.get('descricao')
+    obj.status = form.get('status', 'ativo')
+
     try:
         obj.valor = float(form.get('valor').replace(',', '.'))
     except:
         obj.valor = 0.0
-    obj.bairro = form.get('bairro')
-    obj.imagem = form.get('imagem')
-    obj.descricao = form.get('descricao')
-    obj.status = form.get('status', 'ativo')
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(filepath)
+        obj.imagem = f"/static/uploads/{filename}"
+        app.logger.info(f"📸 Imagem salva: {obj.imagem}")
+    else:
+        if not obj.imagem:
+            obj.imagem = form.get('imagem')
 
     db.session.commit()
+    app.logger.info(f"✅ Imóvel salvo: {obj.codigo}")
     return redirect('/admin')
 
+# ============================================================
+# EXPORTAÇÃO E IMPORTAÇÃO CSV
+# ============================================================
 
 @app.route('/admin/export')
 def admin_export():
@@ -224,9 +249,8 @@ def admin_import():
         obj.status = row.get('status') or 'ativo'
         count += 1
     db.session.commit()
-    print(f"✅ Importados/atualizados: {count}")
+    app.logger.info(f"✅ Importados/atualizados: {count}")
     return redirect('/admin')
-
 
 # ============================================================
 # SERVIÇOS (PÚBLICO E ADMIN)
@@ -263,7 +287,7 @@ def servicos():
         except Exception as e:
             db.session.rollback()
             erro = str(e)
-            print(f"❌ Erro ao salvar serviço: {erro}")
+            app.logger.error(f"❌ Erro ao salvar serviço: {erro}")
 
     imoveis = Imovel.query.filter_by(status="ativo").order_by(Imovel.id.desc()).all()
     return render_template("servicos.html", sucesso=sucesso, erro=erro, imoveis=imoveis)
@@ -298,6 +322,9 @@ def update_servico(id):
     db.session.commit()
     return redirect('/admin/servicos')
 
+# ============================================================
+# PÁGINA DE TEMPORADA
+# ============================================================
 @app.route('/temporada')
 def temporada():
     imoveis = Imovel.query.filter(Imovel.status == 'ativo').all()
