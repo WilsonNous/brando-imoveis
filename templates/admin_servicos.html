@@ -70,9 +70,11 @@
             <td class="py-2 px-3 text-gray-600">
               {{ s.descricao[:60] }}{% if s.descricao and s.descricao|length > 60 %}...{% endif %}
             </td>
+
             <td class="py-2 px-3">
               {{ s.data_agendamento.strftime('%d/%m/%Y') if s.data_agendamento else '-' }}
             </td>
+
             <td class="py-2 px-3">
               <span class="px-2 py-1 rounded text-white text-xs
                 {% if s.status == 'pendente' %}bg-gray-400
@@ -88,12 +90,17 @@
                 <input name="responsavel" placeholder="Responsável" value="{{ s.responsavel or '' }}" class="field text-xs" />
                 <input name="data_agendamento" type="date" value="{{ s.data_agendamento.strftime('%Y-%m-%d') if s.data_agendamento else '' }}" class="field text-xs" />
                 <input name="materiais" placeholder="Materiais" value="{{ s.materiais or '' }}" class="field text-xs" />
-                <input name="custo" placeholder="Custo" value="{{ s.custo or '' }}" class="field text-xs" />
+
+                <!-- 💰 Custo formatado -->
+                <input name="custo" placeholder="Custo ({{ s.custo | brl if s.custo else 'R$ 0,00' }})" 
+                       value="{{ s.custo or '' }}" class="field text-xs" />
+
                 <select name="status" class="field text-xs">
                   <option {% if s.status=='pendente' %}selected{% endif %}>pendente</option>
                   <option {% if s.status=='andamento' %}selected{% endif %}>andamento</option>
                   <option {% if s.status=='concluido' %}selected{% endif %}>concluido</option>
                 </select>
+
                 <button class="btn-small w-full">💾 Salvar</button>
               </form>
             </td>
@@ -110,6 +117,5 @@
   <footer class="text-center text-sm text-gray-600 mt-8 italic py-4 border-t border-gray-200">
     “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.” — Provérbios 16:3
   </footer>
-
 </body>
 </html>
