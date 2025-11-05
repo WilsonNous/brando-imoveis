@@ -227,12 +227,15 @@ def admin_save():
 def admin_export():
     si = StringIO()
     writer = csv.writer(si)
-    writer.writerow(['id', 'codigo', 'tipo', 'valor', 'bairro', 'descricao', 'imagem', 'status'])
+    writer.writerow(['id', 'codigo', 'tipo', 'valor (BRL)', 'bairro', 'descricao', 'imagem', 'status'])
     for i in Imovel.query.order_by(Imovel.id).all():
-        writer.writerow([i.id, i.codigo, i.tipo, i.valor, i.bairro, (i.descricao or '').replace('\n', ' '), i.imagem, i.status])
+        valor_formatado = format_brl(i.valor)
+        writer.writerow([
+            i.id, i.codigo, i.tipo, valor_formatado, i.bairro,
+            (i.descricao or '').replace('\n', ' '), i.imagem, i.status
+        ])
     output = si.getvalue().encode('utf-8')
     return send_file(io.BytesIO(output), mimetype='text/csv', as_attachment=True, download_name='imoveis.csv')
-
 
 @app.route('/admin/import', methods=['POST'])
 def admin_import():
