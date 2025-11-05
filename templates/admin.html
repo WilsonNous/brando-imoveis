@@ -87,12 +87,13 @@
           <button class="bg-gray-800 text-white px-3 py-2 rounded-md hover:bg-gray-900 transition text-sm">Filtrar</button>
         </form>
       </div>
-
+    
       <div class="overflow-auto max-h-[70vh] rounded-md border border-gray-200">
         <table class="min-w-full text-sm">
           <thead class="bg-[color:var(--brand-blue)] text-white">
             <tr class="text-left">
               <th class="py-2 px-2">#</th>
+              <th class="py-2 px-2">Imagem</th>
               <th class="py-2 px-2">Código</th>
               <th class="py-2 px-2">Tipo</th>
               <th class="py-2 px-2">Bairro</th>
@@ -105,11 +106,25 @@
           {% for i in imoveis %}
             <tr class="border-b hover:bg-gray-50 transition">
               <td class="py-2 px-2">{{ i.id }}</td>
-              <td class="py-2 px-2">{{ i.codigo }}</td>
+    
+              <!-- MINIATURA DA IMAGEM -->
+              <td class="py-2 px-2">
+                {% if i.imagem %}
+                  <img src="{{ i.imagem }}" alt="Imagem do imóvel {{ i.codigo }}"
+                       class="w-12 h-12 rounded-md object-cover border border-gray-200 shadow-sm">
+                {% else %}
+                  <div class="w-12 h-12 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs italic">
+                    sem
+                  </div>
+                {% endif %}
+              </td>
+    
+              <td class="py-2 px-2 font-semibold">{{ i.codigo }}</td>
               <td class="py-2 px-2">{{ i.tipo }}</td>
               <td class="py-2 px-2">{{ i.bairro }}</td>
               <td class="py-2 px-2 text-[color:var(--brand-blue)] font-semibold">R$ {{ '{:,.2f}'.format(i.valor) }}</td>
               <td class="py-2 px-2">{{ i.status }}</td>
+    
               <td class="py-2 px-2 flex gap-3">
                 <a href="/admin/edit/{{ i.id }}" class="text-[color:var(--brand-blue)] underline hover:opacity-80">✏️ Editar</a>
                 <a href="/admin/delete/{{ i.id }}" onclick="return confirm('Excluir este imóvel?');" class="text-red-600 underline hover:opacity-80">🗑️ Excluir</a>
