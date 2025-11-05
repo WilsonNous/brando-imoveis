@@ -17,8 +17,10 @@
     <h2 class="text-2xl font-bold text-[color:var(--brand-blue)] mb-1">
       {{ imovel.tipo }} - {{ imovel.bairro }}
     </h2>
+
+    <!-- 💰 Valor formatado no padrão BRL -->
     <p class="text-2xl price mb-3 font-semibold text-gray-800">
-      R$ {{ '{:,.2f}'.format(imovel.valor) }}
+      {{ imovel.valor | brl }}
     </p>
 
     <p class="text-gray-700 leading-relaxed mb-5">{{ imovel.descricao }}</p>
@@ -32,10 +34,8 @@
           class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
       <input type="hidden" name="imovel_id" value="{{ imovel.id }}">
       <div class="grid grid-cols-1 gap-3">
-        <input name="nome" placeholder="Seu nome" required 
-               class="field" />
-        <input name="telefone" placeholder="WhatsApp" required 
-               class="field" />
+        <input name="nome" placeholder="Seu nome" required class="field" />
+        <input name="telefone" placeholder="WhatsApp" required class="field" />
         <textarea name="mensagem" placeholder="Mensagem (opcional)" class="field h-24"></textarea>
         <button class="btn-brand w-full font-semibold">Falar no WhatsApp</button>
       </div>
