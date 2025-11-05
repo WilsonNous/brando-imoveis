@@ -59,7 +59,7 @@
         <option value="">Selecione o imóvel (opcional)</option>
         {% for i in imoveis %}
           <option value="{{ i.id }}">
-            {{ i.codigo }} – {{ i.tipo }} – {{ i.bairro }} (R$ {{ '{:,.0f}'.format(i.valor) }})
+            {{ i.codigo }} – {{ i.tipo }} – {{ i.bairro }} ({{ i.valor | brl }})
           </option>
         {% endfor %}
       </select>
