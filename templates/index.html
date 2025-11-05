@@ -34,7 +34,6 @@
   <!-- LISTAGEM DE IMÓVEIS (BLOCO ROLÁVEL) -->
   <!-- ===================================================== -->
   <section class="max-w-7xl mx-auto p-6">
-    <!-- Container com rolagem fixa -->
     <div class="h-[75vh] overflow-y-auto scroll-smooth rounded-xl shadow-inner bg-white/60 backdrop-blur-sm p-4">
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
         {% for i in imoveis %}
@@ -49,12 +48,23 @@
           </div>
           <div class="p-4">
             <h3 class="text-xl font-semibold text-[color:var(--brand-blue)] mb-1">{{ i.tipo }} - {{ i.bairro }}</h3>
-            <p class="text-gray-700 price mb-2 font-bold">R$ {{ '{:,.2f}'.format(i.valor) }}</p>
-            <p class="text-sm text-gray-500 mb-3">{{ (i.descricao or '')[:110] }}{% if i.descricao and i.descricao|length > 110 %}...{% endif %}</p>
+
+            <!-- 💰 Valor formatado no padrão brasileiro -->
+            <p class="text-gray-700 price mb-2 font-bold">{{ i.valor | brl }}</p>
+
+            <p class="text-sm text-gray-500 mb-3">
+              {{ (i.descricao or '')[:110] }}{% if i.descricao and i.descricao|length > 110 %}...{% endif %}
+            </p>
+
             <div class="flex items-center justify-between">
-              <a href="/imovel/{{ i.id }}" class="inline-block bg-[color:var(--brand-blue)] text-white px-4 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">Ver detalhes</a>
+              <a href="/imovel/{{ i.id }}" 
+                 class="inline-block bg-[color:var(--brand-blue)] text-white px-4 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">
+                 Ver detalhes
+              </a>
               <button class="text-sm underline text-[color:var(--brand-blue)]"
-                      data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">Copiar msg WhatsApp</button>
+                      data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">
+                      Copiar msg WhatsApp
+              </button>
             </div>
           </div>
         </div>
