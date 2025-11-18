@@ -87,6 +87,129 @@
 
   <div class="toast"></div>
   <script src="/static/js/script.js"></script>
+  <!-- ===================================================== -->
+  <!-- MODAL FULLSCREEN DE GALERIA DE FOTOS -->
+  <!-- ===================================================== -->
+  <div id="fullscreen-modal"
+       class="hidden fixed inset-0 bg-black/90 backdrop-blur-sm z-[99999] flex flex-col items-center justify-center">
+  
+    <!-- Botão fechar -->
+    <button id="fs-close"
+            class="absolute top-4 right-4 text-white text-3xl font-bold hover:opacity-80">
+      ✕
+    </button>
+  
+    <!-- Imagem principal -->
+    <img id="fs-image"
+         src=""
+         class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl object-contain transition-all duration-300">
+  
+    <!-- Thumbs -->
+    <div id="fs-thumbs"
+         class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto px-4 py-2">
+  
+    </div>
+  
+    <!-- Botões Navegação -->
+    <button id="fs-prev"
+            class="absolute left-4 text-white text-4xl font-bold hover:opacity-80 select-none">
+      ‹
+    </button>
+  
+    <button id="fs-next"
+            class="absolute right-4 text-white text-4xl font-bold hover:opacity-80 select-none">
+      ›
+    </button>
+  
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      
+      const modal = document.getElementById("fullscreen-modal");
+      const modalImg = document.getElementById("fs-image");
+      const thumbsBox = document.getElementById("fs-thumbs");
+      let images = [];
+      let index = 0;
+    
+      // Função abrir modal
+      window.openFullscreen = function (imgs, startIndex = 0) {
+        images = imgs;
+        index = startIndex;
+    
+        modalImg.src = images[index];
+        modal.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+    
+        // Render thumbs
+        thumbsBox.innerHTML = "";
+        images.forEach((src, i) => {
+          const t = document.createElement("img");
+          t.src = src;
+          t.className =
+            "h-16 w-24 object-cover rounded-md cursor-pointer border-2 " +
+            (i === index ? "border-white" : "border-transparent");
+    
+          t.addEventListener("click", () => {
+            index = i;
+            modalImg.src = images[index];
+            renderThumbs();
+          });
+    
+          thumbsBox.appendChild(t);
+        });
+      };
+    
+      function renderThumbs() {
+        [...thumbsBox.children].forEach((t, i) => {
+          t.classList.toggle("border-white", i === index);
+          t.classList.toggle("border-transparent", i !== index);
+        });
+      }
+    
+      // Navegação
+      document.getElementById("fs-prev").onclick = () => {
+        index = (index - 1 + images.length) % images.length;
+        modalImg.src = images[index];
+        renderThumbs();
+      };
+    
+      document.getElementById("fs-next").onclick = () => {
+        index = (index + 1) % images.length;
+        modalImg.src = images[index];
+        renderThumbs();
+      };
+    
+      // Fechar
+      document.getElementById("fs-close").onclick = closeModal;
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) closeModal();
+      });
+    
+      function closeModal() {
+        modal.classList.add("hidden");
+        document.body.style.overflow = "auto";
+      }
+    
+      // Teclado
+      document.addEventListener("keydown", (e) => {
+        if (modal.classList.contains("hidden")) return;
+    
+        if (e.key === "Escape") closeModal();
+        if (e.key === "ArrowRight") document.getElementById("fs-next").click();
+        if (e.key === "ArrowLeft") document.getElementById("fs-prev").click();
+      });
+    
+      // Mobile swipe
+      let startX = 0;
+      modal.addEventListener("touchstart", (e) => (startX = e.touches[0].clientX));
+      modal.addEventListener("touchend", (e) => {
+        let endX = e.changedTouches[0].clientX;
+        if (endX < startX - 50) document.getElementById("fs-next").click();
+        if (endX > startX + 50) document.getElementById("fs-prev").click();
+      });
+    
+    });
+    </script>
 
   {% block extra_scripts %}{% endblock %}
 </body>
