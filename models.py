@@ -11,11 +11,21 @@ class Imovel(db.Model):
     valor = db.Column(db.Float, nullable=False)
     bairro = db.Column(db.String(100))
     descricao = db.Column(db.Text)
-    imagem = db.Column(db.String(255))
+    imagem = db.Column(db.String(255))  # capa antiga (continua existindo)
     status = db.Column(db.String(20), default='ativo')
 
     leads = db.relationship('Lead', backref='imovel', lazy=True)
     servicos = db.relationship('Servico', backref='imovel', lazy=True)
+
+    # ------------------------------------------
+    # ✅ NOVO — relação com as fotos adicionais
+    # ------------------------------------------
+    fotos = db.relationship(
+        'ImovelFoto',
+        backref='imovel',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
 
     def __repr__(self):
         return f"<Imovel {self.codigo} - {self.tipo} ({self.bairro})>"
@@ -54,3 +64,18 @@ class Servico(db.Model):
 
     def __repr__(self):
         return f"<Servico {self.tipo_servico or ''} - {self.nome_cliente}>"
+
+
+# -----------------------------------------------------
+# ✅ NOVO — tabela de múltiplas fotos por imóvel
+# -----------------------------------------------------
+class ImovelFoto(db.Model):
+    __tablename__ = 'imovel_fotos'
+
+    id = db.Column(db.Integer, primary_key=True)
+    imovel_id = db.Column(db.Integer, db.ForeignKey('imovel.id'), nullable=False)
+    caminho = db.Column(db.String(255), nullable=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<ImovelFoto {self.id} -> Imovel {self.imovel_id}>"
