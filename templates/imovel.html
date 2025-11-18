@@ -7,28 +7,32 @@
 <main class="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-6">
 
   <!-- =============================================== -->
-  <!-- 🖼️ CARROSSEL DE IMAGENS DO IMÓVEL -->
+  <!-- 🖼️ CARROSSEL DE IMAGENS + FULLSCREEN -->
   <!-- =============================================== -->
   <div class="relative">
 
-    {# Construção da lista completa #}
+    {# Construção da lista completa de fotos #}
     {% set fotos = [imovel.imagem] + (imovel.gallery or []) %}
 
-    <!-- SLIDES -->
+    <!-- CARROSSEL -->
     <div id="carousel" class="relative w-full overflow-hidden rounded-xl shadow-lg">
       {% for foto in fotos %}
       <div class="slide w-full h-[360px] md:h-[420px] bg-gray-200 flex-shrink-0 hidden">
-        <img src="{{ foto }}" class="w-full h-full object-cover" alt="Foto do imóvel">
+        <img src="{{ foto }}"
+             class="w-full h-full object-cover cursor-pointer"
+             alt="Foto do imóvel"
+             onclick="openFullscreen(fotosJS, {{ loop.index0 }})">
       </div>
       {% endfor %}
     </div>
 
-    <!-- BOTÕES -->
+    <!-- BOTÃO ANTERIOR -->
     <button id="prev"
             class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full">
       ◀
     </button>
 
+    <!-- BOTÃO PRÓXIMO -->
     <button id="next"
             class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full">
       ▶
@@ -38,7 +42,8 @@
     <div class="flex gap-2 mt-3 overflow-x-auto pb-2">
       {% for foto in fotos %}
       <img src="{{ foto }}"
-           class="thumb w-20 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-[color:var(--brand-blue)] transition">
+           class="thumb w-20 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-[color:var(--brand-blue)] transition"
+           onclick="openFullscreen(fotosJS, {{ loop.index0 }})">
       {% endfor %}
     </div>
 
@@ -78,19 +83,34 @@
 
 </main>
 
-<!-- =============================================== -->
-<!-- 🧠 SCRIPT DO CARROSSEL -->
-<!-- =============================================== -->
+<!-- ===================================================== -->
+<!-- 🧠 SCRIPT COMPLETO: CARROSSEL + FULLSCREEN -->
+<!-- ===================================================== -->
 <script>
+
+  /* =============================================
+     ARRAY DE IMAGENS PARA O FULLSCREEN
+     ============================================= */
+  const fotosJS = [
+    {% for f in fotos %}
+      "{{ f }}",
+    {% endfor %}
+  ];
+
+  /* =============================================
+     CARROSSEL
+     ============================================= */
   const slides = document.querySelectorAll(".slide");
   const thumbs = document.querySelectorAll(".thumb");
   let index = 0;
 
   function showSlide(i) {
     index = (i + slides.length) % slides.length;
+
     slides.forEach((s, idx) => {
       s.classList.toggle("hidden", idx !== index);
     });
+
     thumbs.forEach((t, idx) => {
       t.classList.toggle("border-[color:var(--brand-blue)]", idx === index);
     });
@@ -100,10 +120,20 @@
   document.getElementById("next").onclick = () => showSlide(index + 1);
 
   thumbs.forEach((thumb, i) => {
-    thumb.addEventListener("click", () => showSlide(i));
+    thumb.addEventListener("click", () => {
+      showSlide(i);
+      openFullscreen(fotosJS, i);
+    });
+  });
+
+  slides.forEach((slide, i) => {
+    slide.addEventListener("click", () => {
+      openFullscreen(fotosJS, i);
+    });
   });
 
   showSlide(0);
+
 </script>
 
 {% endblock %}
