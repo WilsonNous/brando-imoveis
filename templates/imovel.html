@@ -3,22 +3,55 @@
 {% block title %}{{ imovel.tipo }} - {{ imovel.bairro }} | Brando Imóveis{% endblock %}
 
 {% block content %}
+
 <main class="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-6">
 
-  <!-- IMAGEM PRINCIPAL -->
-  <div>
-    <img src="{{ imovel.imagem or 'https://picsum.photos/900/700?blur=1' }}" 
-         class="w-full rounded-xl shadow-lg object-cover"
-         alt="Imagem principal do imóvel {{ imovel.codigo }}">
+  <!-- =============================================== -->
+  <!-- 🖼️ CARROSSEL DE IMAGENS DO IMÓVEL -->
+  <!-- =============================================== -->
+  <div class="relative">
+
+    {# Construção da lista completa #}
+    {% set fotos = [imovel.imagem] + (imovel.gallery or []) %}
+
+    <!-- SLIDES -->
+    <div id="carousel" class="relative w-full overflow-hidden rounded-xl shadow-lg">
+      {% for foto in fotos %}
+      <div class="slide w-full h-[360px] md:h-[420px] bg-gray-200 flex-shrink-0 hidden">
+        <img src="{{ foto }}" class="w-full h-full object-cover" alt="Foto do imóvel">
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- BOTÕES -->
+    <button id="prev"
+            class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full">
+      ◀
+    </button>
+
+    <button id="next"
+            class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full">
+      ▶
+    </button>
+
+    <!-- MINIATURAS -->
+    <div class="flex gap-2 mt-3 overflow-x-auto pb-2">
+      {% for foto in fotos %}
+      <img src="{{ foto }}"
+           class="thumb w-20 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-[color:var(--brand-blue)] transition">
+      {% endfor %}
+    </div>
+
   </div>
 
+  <!-- =============================================== -->
   <!-- DETALHES DO IMÓVEL -->
+  <!-- =============================================== -->
   <div>
     <h2 class="text-2xl font-bold text-[color:var(--brand-blue)] mb-1">
       {{ imovel.tipo }} - {{ imovel.bairro }}
     </h2>
 
-    <!-- 💰 Valor formatado no padrão BRL -->
     <p class="text-2xl price mb-3 font-semibold text-gray-800">
       {{ imovel.valor | brl }}
     </p>
@@ -29,10 +62,11 @@
       ← Voltar à listagem
     </a>
 
-    <!-- FORMULÁRIO DE LEAD -->
+    <!-- FORMULÁRIO LEAD -->
     <form action="/lead" method="POST" 
           class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
       <input type="hidden" name="imovel_id" value="{{ imovel.id }}">
+
       <div class="grid grid-cols-1 gap-3">
         <input name="nome" placeholder="Seu nome" required class="field" />
         <input name="telefone" placeholder="WhatsApp" required class="field" />
@@ -43,4 +77,33 @@
   </div>
 
 </main>
+
+<!-- =============================================== -->
+<!-- 🧠 SCRIPT DO CARROSSEL -->
+<!-- =============================================== -->
+<script>
+  const slides = document.querySelectorAll(".slide");
+  const thumbs = document.querySelectorAll(".thumb");
+  let index = 0;
+
+  function showSlide(i) {
+    index = (i + slides.length) % slides.length;
+    slides.forEach((s, idx) => {
+      s.classList.toggle("hidden", idx !== index);
+    });
+    thumbs.forEach((t, idx) => {
+      t.classList.toggle("border-[color:var(--brand-blue)]", idx === index);
+    });
+  }
+
+  document.getElementById("prev").onclick = () => showSlide(index - 1);
+  document.getElementById("next").onclick = () => showSlide(index + 1);
+
+  thumbs.forEach((thumb, i) => {
+    thumb.addEventListener("click", () => showSlide(i));
+  });
+
+  showSlide(0);
+</script>
+
 {% endblock %}
