@@ -3,7 +3,7 @@ from datetime import datetime
 from io import StringIO
 import csv
 import config
-from models import db, Imovel, Lead, Servico
+from models import db, Imovel, Lead, Servico, ImovelFoto
 import io
 import logging
 from sqlalchemy.pool import QueuePool
@@ -83,7 +83,16 @@ def imovel_detalhe(id):
     imovel = Imovel.query.get(id)
     if not imovel:
         return "Imóvel não encontrado.", 404
-    return render_template('imovel.html', imovel=imovel)
+
+    # 🖼️ Monta lista de fotos (capa + adicionais)
+    fotos = []
+    if imovel.imagem:
+        fotos.append(imovel.imagem)
+    for f in imovel.fotos:
+        if f.caminho:
+            fotos.append(f.caminho)
+
+    return render_template('imovel.html', imovel=imovel, fotos=fotos)
 
 # ============================================================
 # LEADS E CONTATOS
@@ -107,7 +116,11 @@ def lead():
         db.session.add(novo_lead)
         db.session.commit()
 
-        msg = f"Olá! Tenho interesse no imóvel código {imovel_id}" if imovel_id else "Olá! Tenho interesse em imóveis da Brando."
+        msg = (
+            f"Olá! Tenho interesse no imóvel código {imovel_id}"
+            if imovel_id else
+            "Olá! Tenho interesse em imóveis da Brando."
+        )
         return redirect(f"https://wa.me/5548991054216?text={msg}")
     except Exception as e:
         app.logger.error(f"❌ Erro ao registrar lead: {e}")
@@ -122,10 +135,18 @@ def contato():
         nome = request.form['nome']
         telefone = request.form['telefone']
         mensagem = request.form.get('mensagem', '')
-        novo_lead = Lead(nome=nome, telefone=telefone, mensagem=mensagem, data=datetime.now())
+        novo_lead = Lead(
+            nome=nome,
+            telefone=telefone,
+            mensagem=mensagem,
+            data=datetime.now()
+        )
         db.session.add(novo_lead)
         db.session.commit()
-        return redirect("https://wa.me/5548991054216?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis.")
+        return redirect(
+            "https://wa.me/5548991054216"
+            "?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis."
+        )
     except Exception as e:
         app.logger.error(f"❌ Erro ao enviar contato: {e}")
         return "Erro ao enviar contato.", 500
@@ -182,8 +203,9 @@ def admin_delete(id):
     return redirect('/admin')
 
 # ============================================================
-# NOVA ROTA /admin/save COM UPLOAD DE IMAGEM
+# /admin/save COM MULTIPLAS FOTOS
 # ============================================================
+
 @app.route('/admin/save', methods=['POST'])
 def admin_save():
     form = request.form
@@ -201,20 +223,20 @@ def admin_save():
     obj.status = form.get('status', 'ativo')
 
     try:
-        obj.valor = float(form.get('valor').replace(',', '.'))
-    except:
+        obj.valor = float((form.get('valor') or "0").replace(',', '.'))
+    except Exception:
         obj.valor = 0.0
 
-    # ==========================================================
-    # MULTIPLAS FOTOS: request.files.getlist("imagens")
-    # ==========================================================
+    # ==========================
+    # MULTIPLAS FOTOS
+    # ==========================
     files = request.files.getlist('imagens')
 
     for file in files:
         if file and allowed_file(file.filename):
             original = secure_filename(file.filename)
 
-            # Nome único (evita sobrescrever no Render)
+            # Nome único (evita sobrescrever)
             unique_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{original}"
 
             filepath = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
@@ -231,9 +253,7 @@ def admin_save():
 
             app.logger.info(f"📸 Foto adicionada ao imóvel {obj.codigo}: {rel_path}")
 
-    # ==========================================================
-    # CASO NÃO HAJA UPLOAD, MANTÉM A CAPA ANTIGA
-    # ==========================================================
+    # Se nenhuma nova imagem foi enviada, mantém a capa antiga (campo hidden "imagem")
     if not obj.imagem:
         obj.imagem = form.get('imagem')
 
@@ -258,7 +278,9 @@ def admin_export():
             (i.descricao or '').replace('\n', ' '), i.imagem, i.status
         ])
     output = si.getvalue().encode('utf-8')
-    return send_file(io.BytesIO(output), mimetype='text/csv', as_attachment=True, download_name='imoveis.csv')
+    return send_file(io.BytesIO(output), mimetype='text/csv',
+                     as_attachment=True, download_name='imoveis.csv')
+
 
 @app.route('/admin/import', methods=['POST'])
 def admin_import():
@@ -279,7 +301,7 @@ def admin_import():
         obj.tipo = row.get('tipo')
         try:
             obj.valor = float(row.get('valor') or 0)
-        except:
+        except Exception:
             obj.valor = 0
         obj.bairro = row.get('bairro')
         obj.descricao = row.get('descricao')
@@ -365,7 +387,6 @@ def update_servico(id):
 
     db.session.commit()
     return redirect('/admin/servicos')
-
 
 # ============================================================
 # PÁGINA DE TEMPORADA
