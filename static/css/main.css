@@ -201,53 +201,23 @@ html, body {
 }
 
 /* =====================================================
-   Interpretação automática de variáveis Tailwind-like
+   Interpretação automática Tailwind-like
    ===================================================== */
-
-/* Variáveis base da paleta Brando */
-:root {
-  --brand-dark: #33545f;
-  --brand-blue: #557985;
-  --brand-light: #88a9b9;
-  --brand-green: #22c55e;
-}
-
-/* Interpretação simulada para as classes bg-[color:var(...)] e text-[color:var(...)] */
 [class*="bg-[color:var(--brand-blue)]"]     { background-color: var(--brand-blue) !important; color: #fff !important; }
-[class*="bg-[color:var(--brand-blue-700)]"] { background-color: var(--brand-light) !important; color: #fff !important; }
-[class*="bg-[color:var(--brand-dark)]"]     { background-color: var(--brand-dark) !important; color: #fff !important; }
+[class*="bg-[color:var(--brand-blue-700)]"] { background-color: var(--brand-blue-700) !important; color: #fff !important; }
 [class*="text-[color:var(--brand-blue)]"]   { color: var(--brand-blue) !important; }
-[class*="text-[color:var(--brand-blue-700)]"] { color: var(--brand-light) !important; }
+[class*="text-[color:var(--brand-blue-700)]"] { color: var(--brand-blue-700) !important; }
 
 /* Hovers */
 [class*="hover:bg-[color:var(--brand-blue-700)]"]:hover {
-  background-color: var(--brand-light) !important;
+  background-color: var(--brand-blue-700) !important;
   color: #fff !important;
 }
 
-/* Fallback genéricos */
-.bg-brando { background-color: var(--brand-blue) !important; color: #fff !important; }
-.text-brando { color: var(--brand-blue) !important; }
-.hover\:bg-brando-light:hover { background-color: var(--brand-light) !important; color: #fff !important; }
-
 /* =====================================================
-   Ajustes complementares para Admin e Serviços
+   Campos, tabelas e componentes
    ===================================================== */
 
-/* Botão secundário do painel admin */
-.btn-admin-sec {
-  background-color: #eab308; /* amarelo Tailwind 500 */
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: all 0.25s ease;
-}
-.btn-admin-sec:hover {
-  background-color: #ca8a04; /* amarelo Tailwind 600 */
-}
-
-/* Campos de formulário padrão (centralizado para todos os HTMLs) */
 .field {
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
@@ -260,17 +230,6 @@ html, body {
   box-shadow: 0 0 0 2px rgba(85, 121, 133, 0.25);
 }
 
-/* Cabeçalhos fixos (como nos painéis e formulários) */
-.header-bar {
-  background-color: var(--brand-blue);
-  color: #fff;
-  font-weight: 600;
-  padding: 1rem;
-  text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Tabelas administrativas */
 .table-brand th {
   background-color: var(--brand-blue);
   color: #fff;
@@ -284,22 +243,10 @@ html, body {
   background-color: #f3f4f6;
 }
 
-/* Botões pequenos para ações em tabelas */
-.btn-small {
-  background-color: var(--brand-blue);
-  color: #fff;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.8rem;
-  transition: all 0.2s ease;
-}
-.btn-small:hover {
-  background-color: var(--brand-blue-700);
-}
-
 /* =====================================================
-   Rolagem dos cards de imóveis (área scroll)
+   Scroll estilizado
    ===================================================== */
+
 section.overflow-y-auto {
   scrollbar-width: thin;
   scrollbar-color: var(--brand-blue) #f0f0f0;
@@ -308,17 +255,14 @@ section.overflow-y-auto {
 section.overflow-y-auto::-webkit-scrollbar {
   width: 8px;
 }
-
 section.overflow-y-auto::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
-
 section.overflow-y-auto::-webkit-scrollbar-thumb {
   background-color: var(--brand-blue);
   border-radius: 4px;
 }
-
 section.overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background-color: var(--brand-blue-700);
 }
@@ -328,14 +272,54 @@ section.overflow-y-auto::-webkit-scrollbar-thumb:hover {
   color: var(--brand-dark) !important;
 }
 
-/* Scrollbar estilizada do bloco de imóveis */
-.h-\[75vh\]::-webkit-scrollbar {
-  width: 8px;
+/* ===============================
+   SLIDES & CARROSSEL BRANDO
+   =============================== */
+
+/* Efeito suave */
+.slide {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  opacity: 0;
+  transform: translateX(10px);
 }
-.h-\[75vh\]::-webkit-scrollbar-thumb {
-  background-color: rgba(85, 121, 133, 0.4);
+.slide:not(.hidden) {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Botões laterais */
+.carousel-btn {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(3px);
+  border-radius: 999px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.25s ease;
+}
+.carousel-btn:hover {
+  background: #ffffff;
+  transform: scale(1.08);
+}
+
+/* Thumbs */
+.thumb {
+  transition: transform 0.25s ease, border-color 0.25s ease;
+  border: 2px solid transparent;
+}
+.thumb:hover {
+  transform: scale(1.05);
+}
+.thumb.active {
+  border-color: var(--brand-blue) !important;
+  box-shadow: 0 0 0 2px var(--brand-blue);
+}
+
+/* Scroll horizontal das thumbnails */
+.thumb-row::-webkit-scrollbar {
+  height: 6px;
+}
+.thumb-row::-webkit-scrollbar-thumb {
+  background: var(--brand-blue);
   border-radius: 10px;
 }
-.h-\[75vh\]::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(85, 121, 133, 0.8);
-}
+
