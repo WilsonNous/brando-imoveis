@@ -187,13 +187,13 @@ def admin_delete(id):
 @app.route('/admin/save', methods=['POST'])
 def admin_save():
     form = request.form
-    file = request.files.get('imagem_file')
     iid = form.get('id')
 
     obj = Imovel.query.get(int(iid)) if iid else Imovel()
     if not iid:
         db.session.add(obj)
 
+    # Campos básicos
     obj.codigo = form.get('codigo')
     obj.tipo = form.get('tipo')
     obj.bairro = form.get('bairro')
@@ -205,18 +205,41 @@ def admin_save():
     except:
         obj.valor = 0.0
 
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-        file.save(filepath)
-        obj.imagem = f"/static/uploads/{filename}"
-        app.logger.info(f"📸 Imagem salva: {obj.imagem}")
-    else:
-        if not obj.imagem:
-            obj.imagem = form.get('imagem')
+    # ==========================================================
+    # MULTIPLAS FOTOS: request.files.getlist("imagens")
+    # ==========================================================
+    files = request.files.getlist('imagens')
+
+    for file in files:
+        if file and allowed_file(file.filename):
+            original = secure_filename(file.filename)
+
+            # Nome único (evita sobrescrever no Render)
+            unique_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{original}"
+
+            filepath = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
+            file.save(filepath)
+
+            rel_path = f"/static/uploads/{unique_name}"
+
+            foto = ImovelFoto(imovel=obj, caminho=rel_path)
+            db.session.add(foto)
+
+            # Se não tem capa, define a primeira imagem
+            if not obj.imagem:
+                obj.imagem = rel_path
+
+            app.logger.info(f"📸 Foto adicionada ao imóvel {obj.codigo}: {rel_path}")
+
+    # ==========================================================
+    # CASO NÃO HAJA UPLOAD, MANTÉM A CAPA ANTIGA
+    # ==========================================================
+    if not obj.imagem:
+        obj.imagem = form.get('imagem')
 
     db.session.commit()
     app.logger.info(f"✅ Imóvel salvo: {obj.codigo}")
+
     return redirect('/admin')
 
 # ============================================================
