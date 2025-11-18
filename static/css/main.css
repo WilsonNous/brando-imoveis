@@ -323,3 +323,13 @@ section.overflow-y-auto::-webkit-scrollbar-thumb:hover {
   border-radius: 10px;
 }
 
+/* ===============================
+   Ajuste do texto do banner (Opção 1)
+   Azul institucional + leve glow
+   =============================== */
+
+.banner-content h2,
+.banner-content p {
+  color: var(--brand-blue) !important;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
