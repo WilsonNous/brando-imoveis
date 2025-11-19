@@ -11,12 +11,12 @@
   <!-- =============================================== -->
   <div class="relative">
 
-    {# Construção da lista completa de fotos #}
-    {% set fotos = [imovel.imagem] + (imovel.gallery or []) %}
+    {# Construção da lista completa de fotos recebida do backend #}
+    {% set fotos_lista = fotos if fotos else ['https://picsum.photos/800/600?blur=1'] %}
 
     <!-- CARROSSEL -->
     <div id="carousel" class="relative w-full overflow-hidden rounded-xl shadow-lg">
-      {% for foto in fotos %}
+      {% for foto in fotos_lista %}
       <div class="slide w-full h-[360px] md:h-[420px] bg-gray-200 flex-shrink-0 hidden">
         <img src="{{ foto }}"
              class="w-full h-full object-cover cursor-pointer"
@@ -40,7 +40,7 @@
 
     <!-- MINIATURAS -->
     <div class="flex gap-2 mt-3 overflow-x-auto pb-2">
-      {% for foto in fotos %}
+      {% for foto in fotos_lista %}
       <img src="{{ foto }}"
            class="thumb w-20 h-16 object-cover rounded-lg cursor-pointer border-2 border-transparent hover:border-[color:var(--brand-blue)] transition"
            onclick="openFullscreen(fotosJS, {{ loop.index0 }})">
@@ -92,7 +92,7 @@
      ARRAY DE IMAGENS PARA O FULLSCREEN
      ============================================= */
   const fotosJS = [
-    {% for f in fotos %}
+    {% for f in fotos_lista %}
       "{{ f }}",
     {% endfor %}
   ];
