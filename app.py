@@ -92,6 +92,10 @@ def imovel_detalhe(id):
         if f.caminho:
             fotos.append(f.caminho)
 
+    # 🔁 Garante ao menos uma imagem para o template trabalhar
+    if not fotos:
+        fotos = ["https://picsum.photos/800/600?blur=1"]
+
     return render_template('imovel.html', imovel=imovel, fotos=fotos)
 
 # ============================================================
