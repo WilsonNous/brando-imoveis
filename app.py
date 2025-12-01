@@ -19,7 +19,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = config.SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFICATIONS
 app.secret_key = config.SECRET_KEY
 
-ADMIN_PASSWORD = "brando2025"  # 🔐 Senha de acesso ao painel
+# 🔐 Senha do painel admin — agora vem do Render (config.py)
+ADMIN_PASSWORD = config.ADMIN_PASSWORD
 
 
 # ============================================================
@@ -30,10 +31,13 @@ ADMIN_PASSWORD = "brando2025"  # 🔐 Senha de acesso ao painel
 def admin_login():
     if request.method == "POST":
         senha = request.form.get("senha")
+
         if senha == ADMIN_PASSWORD:
             session["admin_auth"] = True
             return redirect("/admin")
+
         return render_template("admin_login.html", erro="Senha incorreta.")
+
     return render_template("admin_login.html")
 
 
@@ -62,7 +66,10 @@ def format_brl(value):
         return "R$ 0,00"
 
 
-# 🔧 Engine Options (mantém conexão estável com MySQL HostGator)
+# ============================================================
+# ENGINE OPTIONS — MYSQL HOSTGATOR
+# ============================================================
+
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,
@@ -169,7 +176,11 @@ def lead():
         db.session.add(novo_lead)
         db.session.commit()
 
-        msg = f"Olá! Tenho interesse no imóvel código {imovel_id}" if imovel_id else "Olá! Tenho interesse em imóveis da Brando."
+        msg = (
+            f"Olá! Tenho interesse no imóvel código {imovel_id}"
+            if imovel_id else
+            "Olá! Tenho interesse em imóveis da Brando."
+        )
         return redirect(f"https://wa.me/5548991054216?text={msg}")
 
     except Exception as e:
@@ -188,6 +199,7 @@ def admin():
 
     q = request.args.get('q', '')
     base = Imovel.query
+
     if q:
         like = f"%{q}%"
         base = base.filter(
@@ -250,7 +262,6 @@ def admin_save():
     except:
         obj.valor = 0.0
 
-    # 🔥 Upload múltiplo
     files = request.files.getlist('imagens')
     for file in files:
         if file and allowed_file(file.filename):
@@ -301,7 +312,7 @@ def admin_export():
 
 
 # ============================================================
-# SERVIÇOS (PÚBLICO E ADMIN)
+# SERVIÇOS PÚBLICO E ADMIN
 # ============================================================
 
 @app.route("/servicos", methods=["GET", "POST"])
