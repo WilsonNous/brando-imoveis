@@ -26,23 +26,19 @@
       </div>
 
       <div class="flex flex-wrap gap-2 items-center text-sm">
-        
-        <!-- Ver site -->
+
         <a href="/" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
           🏠 Ver site
         </a>
 
-        <!-- Serviços -->
         <a href="/admin/servicos" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition">
           🛠️ Serviços
         </a>
 
-        <!-- Exportar -->
         <a href="/admin/export" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
           ⬇️ Exportar CSV
         </a>
 
-        <!-- Importar -->
         <form action="/admin/import" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
           <input type="file" name="csvfile" accept=".csv" class="text-xs bg-white rounded-md p-1 border" required />
           <button class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition">
@@ -50,7 +46,6 @@
           </button>
         </form>
 
-        <!-- LOGOUT -->
         <a href="/admin/logout"
            class="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition font-semibold">
            🚪 Sair
@@ -79,7 +74,6 @@
         <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="field">
         <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="field">
 
-        <!-- UPLOAD -->
         <label class="text-sm font-semibold text-gray-600">Fotos do imóvel (múltiplas)</label>
         <input type="file" name="imagens" id="imagens" multiple accept="image/*"
           class="border p-2 rounded-md bg-gray-50 focus:ring-2 focus:ring-[color:var(--brand-blue)]">
@@ -87,11 +81,10 @@
         <small class="text-gray-500 text-xs">Você pode selecionar várias fotos ao mesmo tempo.</small>
 
         <!-- CAPA ATUAL -->
-        {% if imovel and imovel.imagem %}
+        {% if imovel and imovel.capa %}
           <div class="mt-3">
             <p class="text-sm text-gray-700 font-medium">Capa atual:</p>
-            <img src="{{ imovel.imagem }}" class="rounded-md shadow-md mt-1 w-full max-h-48 object-cover">
-            <input type="hidden" name="imagem" value="{{ imovel.imagem }}">
+            <img src="/foto/{{ imovel.capa.id }}" class="rounded-md shadow-md mt-1 w-full max-h-48 object-cover">
           </div>
         {% endif %}
 
@@ -104,10 +97,9 @@
               {% for foto in imovel.fotos %}
                 <div class="relative group border rounded-lg overflow-hidden shadow-sm bg-gray-100">
 
-                  <img src="{{ foto.caminho }}" class="w-full h-24 object-cover">
+                  <img src="/foto/{{ foto.id }}" class="w-full h-24 object-cover">
 
-                  <!-- Indicador de capa -->
-                  {% if imovel.imagem == foto.caminho %}
+                  {% if foto.is_capa %}
                     <span class="absolute top-1 left-1 bg-green-600 text-white text-xs px-2 py-1 rounded">
                       CAPA
                     </span>
@@ -148,7 +140,9 @@
       </form>
     </section>
 
+    <!-- ======================================== -->
     <!-- LISTAGEM -->
+    <!-- ======================================== -->
     <section class="md:col-span-2 bg-white p-4 rounded-xl shadow-md border border-gray-100">
       <div class="flex justify-between items-center mb-3">
         <h2 class="font-semibold text-[color:var(--brand-blue)] text-lg">Imóveis cadastrados</h2>
@@ -180,8 +174,8 @@
               <td class="py-2 px-2">{{ i.id }}</td>
 
               <td class="py-2 px-2">
-                {% if i.imagem %}
-                  <img src="{{ i.imagem }}"
+                {% if i.capa %}
+                  <img src="/foto/{{ i.capa.id }}"
                        class="w-12 h-12 rounded-md object-cover border border-gray-200 shadow-sm">
                 {% else %}
                   <div class="w-12 h-12 bg-gray-100 border flex items-center justify-center rounded text-gray-400 text-xs">
@@ -193,9 +187,7 @@
               <td class="py-2 px-2 font-semibold">{{ i.codigo }}</td>
               <td class="py-2 px-2">{{ i.tipo }}</td>
               <td class="py-2 px-2">{{ i.bairro }}</td>
-
               <td class="py-2 px-2 text-[color:var(--brand-blue)] font-semibold">{{ i.valor | brl }}</td>
-
               <td class="py-2 px-2">{{ i.status }}</td>
 
               <td class="py-2 px-2 flex gap-3">
