@@ -8,7 +8,6 @@ import io
 import logging
 from sqlalchemy.pool import QueuePool
 import os
-from werkzeug.utils import secure_filename
 
 # ============================================================
 # INICIALIZAÇÃO FLASK + BANCO
@@ -19,9 +18,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = config.SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFICATIONS
 app.secret_key = config.SECRET_KEY
 
-# 🔐 Senha do painel admin — agora vem do Render (config.py)
+# 🔐 Senha do painel admin (Render)
 ADMIN_PASSWORD = config.ADMIN_PASSWORD
-
 
 # ============================================================
 # LOGIN DO ADMIN
@@ -48,7 +46,6 @@ def admin_logout():
 
 
 def require_admin():
-    """Bloqueia acesso ao painel se não estiver logado."""
     if not session.get("admin_auth"):
         return redirect("/admin/login")
 
@@ -81,18 +78,13 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 db.init_app(app)
 
-
 # ============================================================
-# CONFIGURAÇÃO DE UPLOAD DE IMAGENS
+# CONFIGURAÇÃO DE IMAGENS (apenas validação de tipo)
 # ============================================================
 
-UPLOAD_FOLDER = os.path.join("static", "uploads")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-def allowed_file(filename):
+def allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
@@ -102,6 +94,19 @@ def allowed_file(filename):
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 app.logger.info("🚀 Brando Imóveis iniciado com pool seguro.")
+
+# ============================================================
+# ROTA PARA SERVIR FOTOS (BLOB)
+# ============================================================
+
+@app.route("/foto/<int:foto_id>")
+def foto_blob(foto_id):
+    foto = ImovelFoto.query.get_or_404(foto_id)
+    if not foto.conteudo:
+        return "Imagem não encontrada.", 404
+
+    mimetype = foto.mimetype or "image/jpeg"
+    return send_file(io.BytesIO(foto.conteudo), mimetype=mimetype)
 
 
 # ============================================================
@@ -124,11 +129,12 @@ def imovel_detalhe(id):
     if not imovel:
         return "Imóvel não encontrado.", 404
 
-    fotos = []
-    if imovel.imagem:
+    # Monta lista de URLs a partir das fotos do banco
+    fotos = [f"/foto/{f.id}" for f in imovel.fotos]
+
+    # Se não tiver fotos BLOB mas tiver imagem antiga
+    if not fotos and imovel.imagem:
         fotos.append(imovel.imagem)
-    for f in imovel.fotos:
-        fotos.append(f.caminho)
 
     if not fotos:
         fotos = ["https://picsum.photos/800/600?blur=1"]
@@ -137,7 +143,7 @@ def imovel_detalhe(id):
 
 
 # ============================================================
-# DEFINIR CAPA
+# DEFINIR CAPA / REMOVER FOTO
 # ============================================================
 
 @app.route("/admin/imovel/<int:imovel_id>/set_capa/<int:foto_id>", methods=["POST"])
@@ -148,8 +154,36 @@ def set_capa(imovel_id, foto_id):
     imovel = Imovel.query.get_or_404(imovel_id)
     foto = ImovelFoto.query.get_or_404(foto_id)
 
-    imovel.imagem = foto.caminho
+    # zera capas anteriores
+    for f in imovel.fotos:
+        f.is_capa = (f.id == foto.id)
+
+    # opcional: mantém compat com coluna antiga
+    imovel.imagem = f"/foto/{foto.id}"
+
     db.session.commit()
+    return redirect(f"/admin/edit/{imovel_id}")
+
+
+@app.route("/admin/imovel/<int:imovel_id>/remove_foto/<int:foto_id>", methods=["POST"])
+def remove_foto(imovel_id, foto_id):
+    r = require_admin()
+    if r: return r
+
+    imovel = Imovel.query.get_or_404(imovel_id)
+    foto = ImovelFoto.query.get_or_404(foto_id)
+
+    was_capa = foto.is_capa
+
+    db.session.delete(foto)
+    db.session.commit()
+
+    # se era capa, define outra como capa
+    imovel = Imovel.query.get_or_404(imovel_id)
+    if was_capa and imovel.fotos:
+        imovel.fotos[0].is_capa = True
+        imovel.imagem = f"/foto/{imovel.fotos[0].id}"
+        db.session.commit()
 
     return redirect(f"/admin/edit/{imovel_id}")
 
@@ -236,7 +270,7 @@ def admin_delete(id):
 
 
 # ============================================================
-# SALVAR IMÓVEL + UPLOAD MULTIPLO
+# SALVAR IMÓVEL + UPLOAD MÚLTIPLO (BLOB)
 # ============================================================
 
 @app.route('/admin/save', methods=['POST'])
@@ -259,30 +293,38 @@ def admin_save():
 
     try:
         obj.valor = float((form.get('valor') or "0").replace(',', '.'))
-    except:
+    except Exception:
         obj.valor = 0.0
 
     files = request.files.getlist('imagens')
+    ja_tem_fotos = len(obj.fotos) > 0
+
     for file in files:
-        if file and allowed_file(file.filename):
-            original = secure_filename(file.filename)
-            unique_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{original}"
+        if file and file.filename and allowed_file(file.filename):
+            conteudo = file.read()
+            if not conteudo:
+                continue
 
-            filepath = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
-            file.save(filepath)
+            foto = ImovelFoto(
+                imovel=obj,
+                conteudo=conteudo,
+                mimetype=file.mimetype or "image/jpeg"
+            )
 
-            rel_path = f"/static/uploads/{unique_name}"
+            # se não tinha foto ainda, essa vira capa
+            if not ja_tem_fotos and not any(f.is_capa for f in obj.fotos):
+                foto.is_capa = True
 
-            foto = ImovelFoto(imovel=obj, caminho=rel_path)
             db.session.add(foto)
-
-            if not obj.imagem:
-                obj.imagem = rel_path
-
-    if not obj.imagem:
-        obj.imagem = form.get('imagem')
+            ja_tem_fotos = True
 
     db.session.commit()
+
+    # se ainda não há capa marcada mas há fotos, define a primeira
+    if obj.fotos and not any(f.is_capa for f in obj.fotos):
+        obj.fotos[0].is_capa = True
+        db.session.commit()
+
     return redirect('/admin')
 
 
@@ -297,18 +339,22 @@ def admin_export():
 
     si = StringIO()
     writer = csv.writer(si)
-    writer.writerow(['id', 'codigo', 'tipo', 'valor', 'bairro', 'descricao', 'imagem', 'status'])
+    writer.writerow(['id', 'codigo', 'tipo', 'valor', 'bairro', 'descricao', 'status'])
 
     for i in Imovel.query.order_by(Imovel.id).all():
         writer.writerow([
             i.id, i.codigo, i.tipo, i.valor, i.bairro,
             (i.descricao or '').replace("\n", " "),
-            i.imagem, i.status
+            i.status
         ])
 
     output = si.getvalue().encode('utf-8')
-    return send_file(io.BytesIO(output), mimetype='text/csv',
-                     as_attachment=True, download_name='imoveis.csv')
+    return send_file(
+        io.BytesIO(output),
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name='imoveis.csv'
+    )
 
 
 # ============================================================
@@ -385,7 +431,7 @@ def update_servico(id):
     custo = request.form.get('custo', '0').replace(',', '.')
     try:
         s.custo = float(custo)
-    except:
+    except Exception:
         s.custo = 0.0
 
     db.session.commit()
