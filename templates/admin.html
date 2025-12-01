@@ -19,30 +19,43 @@
   <!-- ===================================================== -->
   <header class="bg-[color:var(--brand-blue)] text-white shadow-md">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center p-4 gap-2">
+
       <div>
         <h1 class="text-xl font-bold">Painel Administrativo - Brando Imóveis</h1>
         <span class="text-sm opacity-90">CRECI 61150</span>
       </div>
 
       <div class="flex flex-wrap gap-2 items-center text-sm">
+        
+        <!-- Ver site -->
         <a href="/" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
           🏠 Ver site
         </a>
 
+        <!-- Serviços -->
         <a href="/admin/servicos" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition">
           🛠️ Serviços
         </a>
 
+        <!-- Exportar -->
         <a href="/admin/export" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
           ⬇️ Exportar CSV
         </a>
 
+        <!-- Importar -->
         <form action="/admin/import" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
           <input type="file" name="csvfile" accept=".csv" class="text-xs bg-white rounded-md p-1 border" required />
           <button class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition">
             ⬆️ Importar
           </button>
         </form>
+
+        <!-- LOGOUT -->
+        <a href="/admin/logout"
+           class="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition font-semibold">
+           🚪 Sair
+        </a>
+
       </div>
     </div>
   </header>
@@ -82,7 +95,7 @@
           </div>
         {% endif %}
 
-        <!-- GALERIA DE FOTOS EXISTENTES -->
+        <!-- GALERIA EXISTENTE -->
         {% if imovel and imovel.fotos %}
           <div class="mt-4">
             <p class="text-sm font-semibold text-gray-700 mb-2">Galeria de fotos:</p>
@@ -100,7 +113,6 @@
                     </span>
                   {% endif %}
 
-                  <!-- Ações -->
                   <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-2 text-xs">
 
                     <!-- DEFINIR COMO CAPA -->
@@ -110,7 +122,7 @@
                       </button>
                     </form>
 
-                    <!-- REMOVER FOTO (opcional) -->
+                    <!-- REMOVER FOTO -->
                     <form action="/admin/imovel/{{ imovel.id }}/remove_foto/{{ foto.id }}" method="POST"
                       onsubmit="return confirm('Remover esta foto?');">
                       <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">
@@ -136,9 +148,7 @@
       </form>
     </section>
 
-    <!-- ======================================== -->
     <!-- LISTAGEM -->
-    <!-- ======================================== -->
     <section class="md:col-span-2 bg-white p-4 rounded-xl shadow-md border border-gray-100">
       <div class="flex justify-between items-center mb-3">
         <h2 class="font-semibold text-[color:var(--brand-blue)] text-lg">Imóveis cadastrados</h2>
@@ -148,7 +158,7 @@
           <button class="bg-gray-800 text-white px-3 py-2 rounded-md hover:bg-gray-900 transition text-sm">Filtrar</button>
         </form>
       </div>
-    
+
       <div class="overflow-auto max-h-[70vh] rounded-md border border-gray-200">
         <table class="min-w-full text-sm">
           <thead class="bg-[color:var(--brand-blue)] text-white">
