@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, jsonify, send_file
+from flask import Flask, render_template, request, redirect, jsonify, send_file, session
 from datetime import datetime
 from io import StringIO
 import csv
@@ -19,17 +19,48 @@ app.config["SQLALCHEMY_DATABASE_URI"] = config.SQLALCHEMY_DATABASE_URI
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = config.SQLALCHEMY_TRACK_MODIFICATIONS
 app.secret_key = config.SECRET_KEY
 
+ADMIN_PASSWORD = "brando2025"  # 🔐 Senha de acesso ao painel
+
+
+# ============================================================
+# LOGIN DO ADMIN
+# ============================================================
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        senha = request.form.get("senha")
+        if senha == ADMIN_PASSWORD:
+            session["admin_auth"] = True
+            return redirect("/admin")
+        return render_template("admin_login.html", erro="Senha incorreta.")
+    return render_template("admin_login.html")
+
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("admin_auth", None)
+    return redirect("/admin/login")
+
+
+def require_admin():
+    """Bloqueia acesso ao painel se não estiver logado."""
+    if not session.get("admin_auth"):
+        return redirect("/admin/login")
+
+
 # ============================================================
 # FILTRO DE FORMATAÇÃO MONETÁRIA (pt-BR)
 # ============================================================
+
 @app.template_filter('brl')
 def format_brl(value):
-    """Formata número no padrão monetário brasileiro."""
     try:
         value = float(value)
         return f"R$ {value:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
     except (ValueError, TypeError):
         return "R$ 0,00"
+
 
 # 🔧 Engine Options (mantém conexão estável com MySQL HostGator)
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
@@ -43,6 +74,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 db.init_app(app)
 
+
 # ============================================================
 # CONFIGURAÇÃO DE UPLOAD DE IMAGENS
 # ============================================================
@@ -54,15 +86,16 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 def allowed_file(filename):
-    """Verifica se o arquivo tem extensão permitida"""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 # ============================================================
-# LOGGING ESTRUTURADO
+# LOGGING
 # ============================================================
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-app.logger.info("🚀 Brando Imóveis iniciado com pool seguro de conexão MySQL.")
+app.logger.info("🚀 Brando Imóveis iniciado com pool seguro.")
+
 
 # ============================================================
 # PÁGINAS PÚBLICAS
@@ -75,7 +108,7 @@ def home():
         return render_template('index.html', imoveis=imoveis)
     except Exception as e:
         app.logger.error(f"❌ Erro ao consultar imóveis: {e}")
-        return "Erro ao conectar ao banco de dados.", 500
+        return "Erro ao conectar ao banco.", 500
 
 
 @app.route('/imovel/<int:id>')
@@ -84,22 +117,38 @@ def imovel_detalhe(id):
     if not imovel:
         return "Imóvel não encontrado.", 404
 
-    # 🖼️ Monta lista de fotos (capa + adicionais)
     fotos = []
     if imovel.imagem:
         fotos.append(imovel.imagem)
     for f in imovel.fotos:
-        if f.caminho:
-            fotos.append(f.caminho)
+        fotos.append(f.caminho)
 
-    # 🔁 Garante ao menos uma imagem para o template trabalhar
     if not fotos:
         fotos = ["https://picsum.photos/800/600?blur=1"]
 
-    return render_template('imovel.html', imovel=imovel, fotos=fotos)
+    return render_template("imovel.html", imovel=imovel, fotos=fotos)
+
 
 # ============================================================
-# LEADS E CONTATOS
+# DEFINIR CAPA
+# ============================================================
+
+@app.route("/admin/imovel/<int:imovel_id>/set_capa/<int:foto_id>", methods=["POST"])
+def set_capa(imovel_id, foto_id):
+    r = require_admin()
+    if r: return r
+
+    imovel = Imovel.query.get_or_404(imovel_id)
+    foto = ImovelFoto.query.get_or_404(foto_id)
+
+    imovel.imagem = foto.caminho
+    db.session.commit()
+
+    return redirect(f"/admin/edit/{imovel_id}")
+
+
+# ============================================================
+# LEADS
 # ============================================================
 
 @app.route('/lead', methods=['POST'])
@@ -120,79 +169,43 @@ def lead():
         db.session.add(novo_lead)
         db.session.commit()
 
-        msg = (
-            f"Olá! Tenho interesse no imóvel código {imovel_id}"
-            if imovel_id else
-            "Olá! Tenho interesse em imóveis da Brando."
-        )
+        msg = f"Olá! Tenho interesse no imóvel código {imovel_id}" if imovel_id else "Olá! Tenho interesse em imóveis da Brando."
         return redirect(f"https://wa.me/5548991054216?text={msg}")
+
     except Exception as e:
         app.logger.error(f"❌ Erro ao registrar lead: {e}")
         return "Erro ao enviar lead.", 500
 
 
-@app.route('/contato', methods=['GET', 'POST'])
-def contato():
-    if request.method == 'GET':
-        return render_template('contato.html')
-    try:
-        nome = request.form['nome']
-        telefone = request.form['telefone']
-        mensagem = request.form.get('mensagem', '')
-        novo_lead = Lead(
-            nome=nome,
-            telefone=telefone,
-            mensagem=mensagem,
-            data=datetime.now()
-        )
-        db.session.add(novo_lead)
-        db.session.commit()
-        return redirect(
-            "https://wa.me/5548991054216"
-            "?text=Olá!%20Quero%20mais%20informações%20sobre%20os%20imóveis."
-        )
-    except Exception as e:
-        app.logger.error(f"❌ Erro ao enviar contato: {e}")
-        return "Erro ao enviar contato.", 500
-
 # ============================================================
-# BRANDINHO (IA básica)
-# ============================================================
-from brandinho_brain import responder
-
-@app.route('/api/brandinho', methods=['POST'])
-def brandinho():
-    data = request.get_json(force=True) or {}
-    q = (data.get('q') or '')
-    try:
-        answer = responder(q)
-    except Exception as e:
-        app.logger.error(f"❌ Erro no Brandinho: {e}")
-        answer = "Tive um probleminha para processar agora 😅, tente novamente daqui a pouco."
-    return jsonify({"answer": answer})
-
-# ============================================================
-# PAINEL ADMIN - IMÓVEIS
+# PAINEL ADMIN — LISTA / EDITAR / SALVAR
 # ============================================================
 
 @app.route('/admin')
 def admin():
+    r = require_admin()
+    if r: return r
+
     q = request.args.get('q', '')
     base = Imovel.query
     if q:
         like = f"%{q}%"
         base = base.filter(
-            (Imovel.codigo.ilike(like)) |
-            (Imovel.tipo.ilike(like)) |
-            (Imovel.bairro.ilike(like)) |
-            (Imovel.descricao.ilike(like))
+            Imovel.codigo.ilike(like) |
+            Imovel.tipo.ilike(like) |
+            Imovel.bairro.ilike(like) |
+            Imovel.descricao.ilike(like)
         )
+
     imoveis = base.order_by(Imovel.id.desc()).all()
     return render_template('admin.html', imoveis=imoveis, imovel=None)
 
 
 @app.route('/admin/edit/<int:id>')
 def admin_edit(id):
+    r = require_admin()
+    if r: return r
+
     imovel = Imovel.query.get(id)
     imoveis = Imovel.query.order_by(Imovel.id.desc()).all()
     return render_template('admin.html', imoveis=imoveis, imovel=imovel)
@@ -200,18 +213,25 @@ def admin_edit(id):
 
 @app.route('/admin/delete/<int:id>')
 def admin_delete(id):
+    r = require_admin()
+    if r: return r
+
     item = Imovel.query.get(id)
     if item:
         db.session.delete(item)
         db.session.commit()
     return redirect('/admin')
 
+
 # ============================================================
-# /admin/save COM MULTIPLAS FOTOS
+# SALVAR IMÓVEL + UPLOAD MULTIPLO
 # ============================================================
 
 @app.route('/admin/save', methods=['POST'])
 def admin_save():
+    r = require_admin()
+    if r: return r
+
     form = request.form
     iid = form.get('id')
 
@@ -219,7 +239,6 @@ def admin_save():
     if not iid:
         db.session.add(obj)
 
-    # Campos básicos
     obj.codigo = form.get('codigo')
     obj.tipo = form.get('tipo')
     obj.bairro = form.get('bairro')
@@ -228,19 +247,14 @@ def admin_save():
 
     try:
         obj.valor = float((form.get('valor') or "0").replace(',', '.'))
-    except Exception:
+    except:
         obj.valor = 0.0
 
-    # ==========================
-    # MULTIPLAS FOTOS
-    # ==========================
+    # 🔥 Upload múltiplo
     files = request.files.getlist('imagens')
-
     for file in files:
         if file and allowed_file(file.filename):
             original = secure_filename(file.filename)
-
-            # Nome único (evita sobrescrever)
             unique_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}_{original}"
 
             filepath = os.path.join(app.config["UPLOAD_FOLDER"], unique_name)
@@ -251,70 +265,40 @@ def admin_save():
             foto = ImovelFoto(imovel=obj, caminho=rel_path)
             db.session.add(foto)
 
-            # Se não tem capa, define a primeira imagem
             if not obj.imagem:
                 obj.imagem = rel_path
 
-            app.logger.info(f"📸 Foto adicionada ao imóvel {obj.codigo}: {rel_path}")
-
-    # Se nenhuma nova imagem foi enviada, mantém a capa antiga (campo hidden "imagem")
     if not obj.imagem:
         obj.imagem = form.get('imagem')
 
     db.session.commit()
-    app.logger.info(f"✅ Imóvel salvo: {obj.codigo}")
-
     return redirect('/admin')
 
+
 # ============================================================
-# EXPORTAÇÃO E IMPORTAÇÃO CSV
+# EXPORTAÇÃO / IMPORTAÇÃO CSV
 # ============================================================
 
 @app.route('/admin/export')
 def admin_export():
+    r = require_admin()
+    if r: return r
+
     si = StringIO()
     writer = csv.writer(si)
-    writer.writerow(['id', 'codigo', 'tipo', 'valor (BRL)', 'bairro', 'descricao', 'imagem', 'status'])
+    writer.writerow(['id', 'codigo', 'tipo', 'valor', 'bairro', 'descricao', 'imagem', 'status'])
+
     for i in Imovel.query.order_by(Imovel.id).all():
-        valor_formatado = format_brl(i.valor)
         writer.writerow([
-            i.id, i.codigo, i.tipo, valor_formatado, i.bairro,
-            (i.descricao or '').replace('\n', ' '), i.imagem, i.status
+            i.id, i.codigo, i.tipo, i.valor, i.bairro,
+            (i.descricao or '').replace("\n", " "),
+            i.imagem, i.status
         ])
+
     output = si.getvalue().encode('utf-8')
     return send_file(io.BytesIO(output), mimetype='text/csv',
                      as_attachment=True, download_name='imoveis.csv')
 
-
-@app.route('/admin/import', methods=['POST'])
-def admin_import():
-    file = request.files.get('csvfile')
-    if not file:
-        return redirect('/admin')
-    stream = io.StringIO(file.stream.read().decode('utf-8'))
-    reader = csv.DictReader(stream)
-    count = 0
-    for row in reader:
-        codigo = row.get('codigo')
-        if not codigo:
-            continue
-        obj = Imovel.query.filter_by(codigo=codigo).first() or Imovel()
-        if not obj.id:
-            db.session.add(obj)
-        obj.codigo = codigo
-        obj.tipo = row.get('tipo')
-        try:
-            obj.valor = float(row.get('valor') or 0)
-        except Exception:
-            obj.valor = 0
-        obj.bairro = row.get('bairro')
-        obj.descricao = row.get('descricao')
-        obj.imagem = row.get('imagem')
-        obj.status = row.get('status') or 'ativo'
-        count += 1
-    db.session.commit()
-    app.logger.info(f"✅ Importados/atualizados: {count}")
-    return redirect('/admin')
 
 # ============================================================
 # SERVIÇOS (PÚBLICO E ADMIN)
@@ -351,7 +335,6 @@ def servicos():
         except Exception as e:
             db.session.rollback()
             erro = str(e)
-            app.logger.error(f"❌ Erro ao salvar serviço: {erro}")
 
     imoveis = Imovel.query.filter_by(status="ativo").order_by(Imovel.id.desc()).all()
     return render_template("servicos.html", sucesso=sucesso, erro=erro, imoveis=imoveis)
@@ -359,6 +342,9 @@ def servicos():
 
 @app.route('/admin/servicos')
 def admin_servicos():
+    r = require_admin()
+    if r: return r
+
     servicos = (
         db.session.query(Servico)
         .outerjoin(Imovel)
@@ -371,6 +357,9 @@ def admin_servicos():
 
 @app.route('/admin/servicos/update/<int:id>', methods=['POST'])
 def update_servico(id):
+    r = require_admin()
+    if r: return r
+
     s = Servico.query.get(id)
     if not s:
         return redirect('/admin/servicos')
@@ -382,27 +371,30 @@ def update_servico(id):
     s.responsavel = request.form.get('responsavel')
     s.materiais = request.form.get('materiais')
 
-    # 💰 Aceita tanto vírgula quanto ponto
     custo = request.form.get('custo', '0').replace(',', '.')
     try:
         s.custo = float(custo)
-    except ValueError:
+    except:
         s.custo = 0.0
 
     db.session.commit()
     return redirect('/admin/servicos')
 
+
 # ============================================================
 # PÁGINA DE TEMPORADA
 # ============================================================
+
 @app.route('/temporada')
 def temporada():
     imoveis = Imovel.query.filter(Imovel.status == 'ativo').all()
     return render_template('temporada.html', imoveis=imoveis)
 
+
 # ============================================================
 # RUN
 # ============================================================
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
