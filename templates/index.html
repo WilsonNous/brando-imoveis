@@ -40,14 +40,22 @@
         <div class="card bg-white shadow-lg rounded-xl overflow-hidden hover:shadow-2xl transition transform hover:-translate-y-1"
              data-card
              data-search="{{ (i.tipo ~ ' ' ~ i.bairro ~ ' ' ~ i.codigo ~ ' R$ ' ~ i.valor)|lower }}">
+
+          <!-- IMAGEM (AGORA USANDO A CAPA DO BANCO /foto/<id>) -->
           <div class="relative">
-            <span class="badge bg-[color:var(--brand-blue)] text-white absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow">{{ i.tipo }}</span>
-            <img src="{{ i.imagem or 'https://picsum.photos/800/600?blur=1' }}"
+            <span class="badge bg-[color:var(--brand-blue)] text-white absolute top-3 left-3 px-3 py-1 text-xs font-semibold rounded-full shadow">
+              {{ i.tipo }}
+            </span>
+
+            <img src="{{ i.capa_url }}"
                  class="w-full h-52 object-cover"
                  alt="Imagem do imóvel {{ i.codigo }}">
           </div>
+
           <div class="p-4">
-            <h3 class="text-xl font-semibold text-[color:var(--brand-blue)] mb-1">{{ i.tipo }} - {{ i.bairro }}</h3>
+            <h3 class="text-xl font-semibold text-[color:var(--brand-blue)] mb-1">
+              {{ i.tipo }} - {{ i.bairro }}
+            </h3>
 
             <!-- 💰 Valor formatado no padrão brasileiro -->
             <p class="text-gray-700 price mb-2 font-bold">{{ i.valor | brl }}</p>
@@ -61,9 +69,10 @@
                  class="inline-block bg-[color:var(--brand-blue)] text-white px-4 py-2 rounded-md hover:bg-[color:var(--brand-blue-700)] transition">
                  Ver detalhes
               </a>
+
               <button class="text-sm underline text-[color:var(--brand-blue)]"
                       data-whats="Olá! Tenho interesse no imóvel código {{ i.codigo }}.">
-                      Copiar msg WhatsApp
+                Copiar msg WhatsApp
               </button>
             </div>
           </div>
