@@ -25,24 +25,36 @@
       </div>
 
       <div class="flex flex-wrap gap-2 items-center text-sm">
-        <a href="/" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">🏠 Ver site</a>
-        <a href="/admin/servicos" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition">🛠️ Serviços</a>
-        <a href="/admin/export" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">⬇️ Exportar CSV</a>
+        <a href="/" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          🏠 Ver site
+        </a>
+
+        <a href="/admin/servicos" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition">
+          🛠️ Serviços
+        </a>
+
+        <a href="/admin/export" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          ⬇️ Exportar CSV
+        </a>
 
         <form action="/admin/import" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
           <input type="file" name="csvfile" accept=".csv" class="text-xs bg-white rounded-md p-1 border" required />
-          <button class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition">⬆️ Importar</button>
+          <button class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition">
+            ⬆️ Importar
+          </button>
         </form>
       </div>
     </div>
   </header>
 
   <!-- ===================================================== -->
-  <!-- CONTEÚDO PRINCIPAL -->
+  <!-- CONTEÚDO -->
   <!-- ===================================================== -->
   <main class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
 
-    <!-- FORMULÁRIO -->
+    <!-- ======================================== -->
+    <!-- FORMULÁRIO DE CADASTRO / EDIÇÃO -->
+    <!-- ======================================== -->
     <section class="md:col-span-1 bg-white p-4 rounded-xl shadow-md border border-gray-100">
       <h2 class="font-semibold mb-3 text-[color:var(--brand-blue)] text-lg">Cadastrar / Editar Imóvel</h2>
 
@@ -54,27 +66,62 @@
         <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="field">
         <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="field">
 
-        <!-- ✨ UPLOAD DE IMAGENS MÚLTIPLAS -->
+        <!-- UPLOAD -->
         <label class="text-sm font-semibold text-gray-600">Fotos do imóvel (múltiplas)</label>
+        <input type="file" name="imagens" id="imagens" multiple accept="image/*"
+          class="border p-2 rounded-md bg-gray-50 focus:ring-2 focus:ring-[color:var(--brand-blue)]">
 
-        <input type="file"
-              name="imagens"
-              id="imagens"
-              multiple
-              accept="image/*"
-              class="border p-2 rounded-md focus:ring-2 focus:ring-[color:var(--brand-blue)] outline-none bg-gray-50">
+        <small class="text-gray-500 text-xs">Você pode selecionar várias fotos ao mesmo tempo.</small>
 
-        <small class="text-gray-500 text-xs">
-          Você pode selecionar várias fotos ao mesmo tempo.
-        </small>
-
-        <!-- ✔️ CAPA ATUAL -->
+        <!-- CAPA ATUAL -->
         {% if imovel and imovel.imagem %}
           <div class="mt-3">
             <p class="text-sm text-gray-700 font-medium">Capa atual:</p>
-            <img src="{{ imovel.imagem }}"
-                class="rounded-md shadow-md mt-1 w-full max-h-48 object-cover">
+            <img src="{{ imovel.imagem }}" class="rounded-md shadow-md mt-1 w-full max-h-48 object-cover">
             <input type="hidden" name="imagem" value="{{ imovel.imagem }}">
+          </div>
+        {% endif %}
+
+        <!-- GALERIA DE FOTOS EXISTENTES -->
+        {% if imovel and imovel.fotos %}
+          <div class="mt-4">
+            <p class="text-sm font-semibold text-gray-700 mb-2">Galeria de fotos:</p>
+
+            <div class="grid grid-cols-3 gap-3">
+              {% for foto in imovel.fotos %}
+                <div class="relative group border rounded-lg overflow-hidden shadow-sm bg-gray-100">
+
+                  <img src="{{ foto.caminho }}" class="w-full h-24 object-cover">
+
+                  <!-- Indicador de capa -->
+                  {% if imovel.imagem == foto.caminho %}
+                    <span class="absolute top-1 left-1 bg-green-600 text-white text-xs px-2 py-1 rounded">
+                      CAPA
+                    </span>
+                  {% endif %}
+
+                  <!-- Ações -->
+                  <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-2 text-xs">
+
+                    <!-- DEFINIR COMO CAPA -->
+                    <form action="/admin/imovel/{{ imovel.id }}/set_capa/{{ foto.id }}" method="POST">
+                      <button class="bg-yellow-400 hover:bg-yellow-500 text-black px-2 py-1 rounded">
+                        Definir capa
+                      </button>
+                    </form>
+
+                    <!-- REMOVER FOTO (opcional) -->
+                    <form action="/admin/imovel/{{ imovel.id }}/remove_foto/{{ foto.id }}" method="POST"
+                      onsubmit="return confirm('Remover esta foto?');">
+                      <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">
+                        Remover
+                      </button>
+                    </form>
+
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
           </div>
         {% endif %}
 
@@ -89,10 +136,13 @@
       </form>
     </section>
 
+    <!-- ======================================== -->
     <!-- LISTAGEM -->
+    <!-- ======================================== -->
     <section class="md:col-span-2 bg-white p-4 rounded-xl shadow-md border border-gray-100">
       <div class="flex justify-between items-center mb-3">
         <h2 class="font-semibold text-[color:var(--brand-blue)] text-lg">Imóveis cadastrados</h2>
+
         <form method="get" action="/admin" class="flex gap-2">
           <input name="q" placeholder="Filtrar por texto" value="{{ request.args.get('q','') }}" class="field text-sm">
           <button class="bg-gray-800 text-white px-3 py-2 rounded-md hover:bg-gray-900 transition text-sm">Filtrar</button>
@@ -113,18 +163,18 @@
               <th class="py-2 px-2">Ações</th>
             </tr>
           </thead>
+
           <tbody>
           {% for i in imoveis %}
             <tr class="border-b hover:bg-gray-50 transition">
               <td class="py-2 px-2">{{ i.id }}</td>
 
-              <!-- MINIATURA -->
               <td class="py-2 px-2">
                 {% if i.imagem %}
-                  <img src="{{ i.imagem }}" alt="Imagem do imóvel {{ i.codigo }}"
+                  <img src="{{ i.imagem }}"
                        class="w-12 h-12 rounded-md object-cover border border-gray-200 shadow-sm">
                 {% else %}
-                  <div class="w-12 h-12 rounded-md bg-gray-100 flex items-center justify-center text-gray-400 text-xs italic">
+                  <div class="w-12 h-12 bg-gray-100 border flex items-center justify-center rounded text-gray-400 text-xs">
                     sem
                   </div>
                 {% endif %}
@@ -140,17 +190,22 @@
 
               <td class="py-2 px-2 flex gap-3">
                 <a href="/admin/edit/{{ i.id }}" class="text-[color:var(--brand-blue)] underline hover:opacity-80">✏️ Editar</a>
-                <a href="/admin/delete/{{ i.id }}" onclick="return confirm('Excluir este imóvel?');" class="text-red-600 underline hover:opacity-80">🗑️ Excluir</a>
+                <a href="/admin/delete/{{ i.id }}"
+                   class="text-red-600 underline hover:opacity-80"
+                   onclick="return confirm('Excluir este imóvel?');">
+                   🗑️ Excluir
+                </a>
               </td>
             </tr>
           {% endfor %}
           </tbody>
+
         </table>
       </div>
     </section>
+
   </main>
 
-  <!-- RODAPÉ -->
   <footer class="text-center text-sm text-gray-600 mt-8 italic py-4 border-t border-gray-200">
     “Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos.” — Provérbios 16:3
   </footer>
