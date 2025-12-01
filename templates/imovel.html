@@ -11,8 +11,8 @@
   <!-- =============================================== -->
   <div class="relative">
 
-    {# Construção da lista completa de fotos recebida do backend #}
-    {% set fotos_lista = fotos if fotos else ['https://picsum.photos/800/600?blur=1'] %}
+    {# Lista final de fotos será sempre uma lista de URLs como /foto/<id> #}
+    {% set fotos_lista = fotos if fotos else ['/static/img/placeholder.jpg'] %}
 
     <!-- CARROSSEL -->
     <div id="carousel" class="relative w-full overflow-hidden rounded-xl shadow-lg">
