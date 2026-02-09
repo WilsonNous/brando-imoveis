@@ -329,23 +329,130 @@ def admin_save():
 
 
 # ============================================================
-# EXPORTAÇÃO / IMPORTAÇÃO CSV
+# EXPORTAÇÃO / IMPORTAÇÃO (Excel XLSX preferencial + CSV fallback)
 # ============================================================
 
-@app.route('/admin/export')
-def admin_export():
+import re
+from decimal import Decimal, InvalidOperation
+
+try:
+    import openpyxl
+    from openpyxl import Workbook
+except Exception:
+    openpyxl = None
+    Workbook = None
+
+
+def parse_valor_brl(raw) -> float:
+    """
+    Converte valores em formatos comuns (Excel/CSV) para float (reais):
+      - 1200000
+      - 1200000.00
+      - 1.200.000,00
+      - R$ 1.200.000,00
+      - "R$ 260.000,00"
+    """
+    if raw is None:
+        return 0.0
+
+    s = str(raw).strip()
+    if not s:
+        return 0.0
+
+    # remove moeda e espaços
+    s = s.replace("R$", "").replace("r$", "").strip()
+    s = s.replace("\u00a0", " ").replace(" ", "")
+
+    # remove qualquer coisa que não seja dígito, ponto, vírgula, sinal
+    s = re.sub(r"[^0-9\-,.]", "", s)
+
+    # se tem . e , -> padrão BR: 1.234.567,89
+    if "." in s and "," in s:
+        s = s.replace(".", "").replace(",", ".")
+    # se tem só vírgula -> vira decimal
+    elif "," in s and "." not in s:
+        s = s.replace(",", ".")
+    # se tem só ponto -> já é decimal US/Excel ou inteiro com ponto (não mexe)
+
+    try:
+        # Decimal evita alguns bugs de float em parsing
+        return float(Decimal(s))
+    except (InvalidOperation, ValueError):
+        return 0.0
+
+
+def sniff_csv_dialect(text: str):
+    """
+    Detecta delimitador (',' ou ';') e retorna DictReader pronto.
+    """
+    # pega só as primeiras linhas pra sniff
+    sample = "\n".join(text.splitlines()[:20])
+    # heurística simples: se tiver mais ';' que ',' no header, usa ';'
+    header = sample.splitlines()[0] if sample.splitlines() else ""
+    delim = ";" if header.count(";") > header.count(",") else ","
+    return delim
+
+
+@app.route('/admin/export.xlsx')
+def admin_export_xlsx():
+    r = require_admin()
+    if r: return r
+
+    if openpyxl is None:
+        return "openpyxl não está instalado no servidor. Adicione no requirements.txt", 500
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "imoveis"
+
+    # Header (modelo oficial)
+    ws.append(["codigo", "tipo", "valor", "bairro", "descricao", "status"])
+
+    for i in Imovel.query.order_by(Imovel.id).all():
+        ws.append([
+            i.codigo,
+            i.tipo,
+            float(i.valor or 0),
+            i.bairro,
+            i.descricao or "",
+            i.status or "ativo",
+        ])
+
+    # formata coluna C (valor) como moeda BR no Excel (opcional)
+    # Se não quiser, pode remover esse loop.
+    for row in ws.iter_rows(min_row=2, min_col=3, max_col=3):
+        for cell in row:
+            cell.number_format = 'R$ #,##0.00'
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+
+    return send_file(
+        out,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="imoveis.xlsx"
+    )
+
+
+@app.route('/admin/export')  # mantém CSV antigo
+def admin_export_csv():
     r = require_admin()
     if r: return r
 
     si = StringIO()
     writer = csv.writer(si)
-    writer.writerow(['id', 'codigo', 'tipo', 'valor', 'bairro', 'descricao', 'status'])
+    writer.writerow(['codigo', 'tipo', 'valor', 'bairro', 'descricao', 'status'])
 
     for i in Imovel.query.order_by(Imovel.id).all():
         writer.writerow([
-            i.id, i.codigo, i.tipo, i.valor, i.bairro,
+            i.codigo,
+            i.tipo,
+            float(i.valor or 0),  # salva número puro no CSV (sem R$)
+            i.bairro,
             (i.descricao or '').replace("\n", " "),
-            i.status
+            i.status or "ativo"
         ])
 
     output = si.getvalue().encode('utf-8')
@@ -356,27 +463,109 @@ def admin_export():
         download_name='imoveis.csv'
     )
 
+
 @app.route('/admin/import', methods=['POST'])
 def admin_import():
+    """
+    Importa tanto XLSX quanto CSV.
+    - Preferencial: XLSX (Excel)
+    - Fallback: CSV com delimitador detectado e encoding robusto
+    """
     r = require_admin()
     if r: 
         return r
 
-    file = request.files.get('csvfile')
+    file = request.files.get('csvfile')  # mantém o mesmo name do form pra não quebrar seu HTML
     if not file or not file.filename:
         return redirect('/admin')
 
-    # tenta detectar encoding comum
+    filename = (file.filename or "").lower()
+
+    count = 0
+
+    # ------------------------
+    # XLSX (Excel) - preferencial
+    # ------------------------
+    if filename.endswith(".xlsx") or filename.endswith(".xlsm") or filename.endswith(".xltx") or filename.endswith(".xltm"):
+        if openpyxl is None:
+            return "openpyxl não está instalado no servidor. Adicione no requirements.txt", 500
+
+        wb = openpyxl.load_workbook(file, data_only=True)
+        ws = wb.active
+
+        # espera header na linha 1
+        headers = []
+        for cell in ws[1]:
+            headers.append((str(cell.value).strip().lower() if cell.value is not None else ""))
+
+        # mapeia colunas
+        def col_idx(name: str):
+            try:
+                return headers.index(name)
+            except ValueError:
+                return None
+
+        idx_codigo = col_idx("codigo")
+        idx_tipo = col_idx("tipo")
+        idx_valor = col_idx("valor")
+        idx_bairro = col_idx("bairro")
+        idx_desc = col_idx("descricao")
+        idx_status = col_idx("status")
+        idx_imagem = col_idx("imagem")  # opcional
+
+        if idx_codigo is None:
+            return "Planilha inválida: coluna 'codigo' é obrigatória.", 400
+
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            codigo = (str(row[idx_codigo]).strip() if row[idx_codigo] is not None else "")
+            if not codigo:
+                continue
+
+            obj = Imovel.query.filter_by(codigo=codigo).first()
+            if not obj:
+                obj = Imovel(codigo=codigo)
+                db.session.add(obj)
+
+            if idx_tipo is not None:
+                obj.tipo = (str(row[idx_tipo]).strip() if row[idx_tipo] is not None else obj.tipo or "")
+
+            if idx_bairro is not None:
+                obj.bairro = (str(row[idx_bairro]).strip() if row[idx_bairro] is not None else obj.bairro or "")
+
+            if idx_desc is not None:
+                obj.descricao = (str(row[idx_desc]).strip() if row[idx_desc] is not None else obj.descricao or "")
+
+            if idx_status is not None:
+                obj.status = (str(row[idx_status]).strip().lower() if row[idx_status] is not None else (obj.status or "ativo"))
+
+            if idx_valor is not None:
+                obj.valor = parse_valor_brl(row[idx_valor])
+
+            # imagem opcional (só se vier e se o modelo tiver campo imagem)
+            if idx_imagem is not None and hasattr(obj, "imagem"):
+                img = (str(row[idx_imagem]).strip() if row[idx_imagem] is not None else "")
+                if img:
+                    obj.imagem = img
+
+            count += 1
+
+        db.session.commit()
+        app.logger.info(f"✅ Importados/atualizados via XLSX: {count}")
+        return redirect('/admin')
+
+    # ------------------------
+    # CSV - fallback
+    # ------------------------
     raw = file.stream.read()
     try:
-        text = raw.decode('utf-8-sig')  # bom para arquivos do Excel
+        text = raw.decode('utf-8-sig')  # bom pra Excel
     except UnicodeDecodeError:
         text = raw.decode('latin-1')
 
-    stream = io.StringIO(text)
-    reader = csv.DictReader(stream)
+    delim = sniff_csv_dialect(text)
 
-    count = 0
+    stream = io.StringIO(text)
+    reader = csv.DictReader(stream, delimiter=delim)
 
     for row in reader:
         codigo = (row.get('codigo') or '').strip()
@@ -388,33 +577,25 @@ def admin_import():
             obj = Imovel(codigo=codigo)
             db.session.add(obj)
 
-        # campos principais
         obj.tipo = (row.get('tipo') or obj.tipo or '').strip()
         obj.bairro = (row.get('bairro') or obj.bairro or '').strip()
         obj.descricao = (row.get('descricao') or obj.descricao or '').strip()
-        obj.status = (row.get('status') or obj.status or 'ativo').strip()
+        obj.status = (row.get('status') or obj.status or 'ativo').strip().lower() or 'ativo'
 
-        # valor (aceita 100000, 100000.00, 100.000,00)
         v = (row.get('valor') or '').strip()
         if v:
-            try:
-                # remove milhares e converte decimal pt-BR
-                v2 = v.replace('R$', '').replace(' ', '')
-                v2 = v2.replace('.', '').replace(',', '.')
-                obj.valor = float(v2)
-            except Exception:
-                # se der ruim, mantém o existente
-                pass
+            obj.valor = parse_valor_brl(v)
 
-        # imagem (URL antiga opcional — só grava se ainda não tem e se veio no CSV)
-        img = (row.get('imagem') or '').strip()
-        if img and not getattr(obj, 'imagem', None):
-            obj.imagem = img
+        # imagem opcional (só se existir no modelo)
+        if hasattr(obj, "imagem"):
+            img = (row.get('imagem') or '').strip()
+            if img and not getattr(obj, 'imagem', None):
+                obj.imagem = img
 
         count += 1
 
     db.session.commit()
-    app.logger.info(f"✅ Importados/atualizados via CSV: {count}")
+    app.logger.info(f"✅ Importados/atualizados via CSV: {count} (delim='{delim}')")
     return redirect('/admin')
 
 
