@@ -356,6 +356,67 @@ def admin_export():
         download_name='imoveis.csv'
     )
 
+@app.route('/admin/import', methods=['POST'])
+def admin_import():
+    r = require_admin()
+    if r: 
+        return r
+
+    file = request.files.get('csvfile')
+    if not file or not file.filename:
+        return redirect('/admin')
+
+    # tenta detectar encoding comum
+    raw = file.stream.read()
+    try:
+        text = raw.decode('utf-8-sig')  # bom para arquivos do Excel
+    except UnicodeDecodeError:
+        text = raw.decode('latin-1')
+
+    stream = io.StringIO(text)
+    reader = csv.DictReader(stream)
+
+    count = 0
+
+    for row in reader:
+        codigo = (row.get('codigo') or '').strip()
+        if not codigo:
+            continue
+
+        obj = Imovel.query.filter_by(codigo=codigo).first()
+        if not obj:
+            obj = Imovel(codigo=codigo)
+            db.session.add(obj)
+
+        # campos principais
+        obj.tipo = (row.get('tipo') or obj.tipo or '').strip()
+        obj.bairro = (row.get('bairro') or obj.bairro or '').strip()
+        obj.descricao = (row.get('descricao') or obj.descricao or '').strip()
+        obj.status = (row.get('status') or obj.status or 'ativo').strip()
+
+        # valor (aceita 100000, 100000.00, 100.000,00)
+        v = (row.get('valor') or '').strip()
+        if v:
+            try:
+                # remove milhares e converte decimal pt-BR
+                v2 = v.replace('R$', '').replace(' ', '')
+                v2 = v2.replace('.', '').replace(',', '.')
+                obj.valor = float(v2)
+            except Exception:
+                # se der ruim, mantém o existente
+                pass
+
+        # imagem (URL antiga opcional — só grava se ainda não tem e se veio no CSV)
+        img = (row.get('imagem') or '').strip()
+        if img and not getattr(obj, 'imagem', None):
+            obj.imagem = img
+
+        count += 1
+
+    db.session.commit()
+    app.logger.info(f"✅ Importados/atualizados via CSV: {count}")
+    return redirect('/admin')
+
 
 # ============================================================
 # SERVIÇOS PÚBLICO E ADMIN
