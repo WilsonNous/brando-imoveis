@@ -10,6 +10,23 @@ from sqlalchemy.pool import QueuePool
 import os
 
 # ============================================================
+# IMPORTS PARA EXCEL / PARSING
+# ============================================================
+
+import re
+from decimal import Decimal, InvalidOperation
+
+try:
+    import openpyxl
+    from openpyxl import Workbook
+    from openpyxl.worksheet.datavalidation import DataValidation
+except Exception:
+    openpyxl = None
+    Workbook = None
+    DataValidation = None
+
+
+# ============================================================
 # INICIALIZAÇÃO FLASK + BANCO
 # ============================================================
 
@@ -20,6 +37,7 @@ app.secret_key = config.SECRET_KEY
 
 # 🔐 Senha do painel admin (Render)
 ADMIN_PASSWORD = config.ADMIN_PASSWORD
+
 
 # ============================================================
 # LOGIN DO ADMIN
@@ -78,6 +96,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 
 db.init_app(app)
 
+
 # ============================================================
 # CONFIGURAÇÃO DE IMAGENS (apenas validação de tipo)
 # ============================================================
@@ -94,6 +113,58 @@ def allowed_file(filename: str) -> bool:
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 app.logger.info("🚀 Brando Imóveis iniciado com pool seguro.")
+
+
+# ============================================================
+# HELPERS IMPORT/EXPORT (VALOR BRL + CSV DIALECT)
+# ============================================================
+
+def parse_valor_brl(raw) -> float:
+    """
+    Converte valores em formatos comuns (Excel/CSV) para float (reais):
+      - 1200000
+      - 1200000.00
+      - 1.200.000,00
+      - R$ 1.200.000,00
+      - "R$ 260.000,00"
+    """
+    if raw is None:
+        return 0.0
+
+    s = str(raw).strip()
+    if not s:
+        return 0.0
+
+    # remove moeda e espaços
+    s = s.replace("R$", "").replace("r$", "").strip()
+    s = s.replace("\u00a0", " ").replace(" ", "")
+
+    # remove qualquer coisa que não seja dígito, ponto, vírgula, sinal
+    s = re.sub(r"[^0-9\-,.]", "", s)
+
+    # se tem . e , -> padrão BR: 1.234.567,89
+    if "." in s and "," in s:
+        s = s.replace(".", "").replace(",", ".")
+    # se tem só vírgula -> vira decimal
+    elif "," in s and "." not in s:
+        s = s.replace(",", ".")
+    # se tem só ponto -> já é decimal US/Excel ou inteiro com ponto
+
+    try:
+        return float(Decimal(s))
+    except (InvalidOperation, ValueError):
+        return 0.0
+
+
+def sniff_csv_dialect(text: str) -> str:
+    """
+    Detecta delimitador (',' ou ';') usando heurística no header.
+    """
+    sample = "\n".join(text.splitlines()[:20])
+    header = sample.splitlines()[0] if sample.splitlines() else ""
+    delim = ";" if header.count(";") > header.count(",") else ","
+    return delim
+
 
 # ============================================================
 # ROTA PARA SERVIR FOTOS (BLOB)
@@ -129,11 +200,10 @@ def imovel_detalhe(id):
     if not imovel:
         return "Imóvel não encontrado.", 404
 
-    # Monta lista de URLs a partir das fotos do banco
     fotos = [f"/foto/{f.id}" for f in imovel.fotos]
 
     # Se não tiver fotos BLOB mas tiver imagem antiga
-    if not fotos and imovel.imagem:
+    if not fotos and getattr(imovel, "imagem", None):
         fotos.append(imovel.imagem)
 
     if not fotos:
@@ -154,12 +224,12 @@ def set_capa(imovel_id, foto_id):
     imovel = Imovel.query.get_or_404(imovel_id)
     foto = ImovelFoto.query.get_or_404(foto_id)
 
-    # zera capas anteriores
     for f in imovel.fotos:
         f.is_capa = (f.id == foto.id)
 
-    # opcional: mantém compat com coluna antiga
-    imovel.imagem = f"/foto/{foto.id}"
+    # compat com coluna antiga
+    if hasattr(imovel, "imagem"):
+        imovel.imagem = f"/foto/{foto.id}"
 
     db.session.commit()
     return redirect(f"/admin/edit/{imovel_id}")
@@ -174,15 +244,14 @@ def remove_foto(imovel_id, foto_id):
     foto = ImovelFoto.query.get_or_404(foto_id)
 
     was_capa = foto.is_capa
-
     db.session.delete(foto)
     db.session.commit()
 
-    # se era capa, define outra como capa
     imovel = Imovel.query.get_or_404(imovel_id)
     if was_capa and imovel.fotos:
         imovel.fotos[0].is_capa = True
-        imovel.imagem = f"/foto/{imovel.fotos[0].id}"
+        if hasattr(imovel, "imagem"):
+            imovel.imagem = f"/foto/{imovel.fotos[0].id}"
         db.session.commit()
 
     return redirect(f"/admin/edit/{imovel_id}")
@@ -311,7 +380,6 @@ def admin_save():
                 mimetype=file.mimetype or "image/jpeg"
             )
 
-            # se não tinha foto ainda, essa vira capa
             if not ja_tem_fotos and not any(f.is_capa for f in obj.fotos):
                 foto.is_capa = True
 
@@ -320,7 +388,6 @@ def admin_save():
 
     db.session.commit()
 
-    # se ainda não há capa marcada mas há fotos, define a primeira
     if obj.fotos and not any(f.is_capa for f in obj.fotos):
         obj.fotos[0].is_capa = True
         db.session.commit()
@@ -332,65 +399,71 @@ def admin_save():
 # EXPORTAÇÃO / IMPORTAÇÃO (Excel XLSX preferencial + CSV fallback)
 # ============================================================
 
-import re
-from decimal import Decimal, InvalidOperation
-
-try:
-    import openpyxl
-    from openpyxl import Workbook
-except Exception:
-    openpyxl = None
-    Workbook = None
-
-
-def parse_valor_brl(raw) -> float:
+@app.route('/admin/modelo.xlsx')
+def admin_modelo_xlsx():
     """
-    Converte valores em formatos comuns (Excel/CSV) para float (reais):
-      - 1200000
-      - 1200000.00
-      - 1.200.000,00
-      - R$ 1.200.000,00
-      - "R$ 260.000,00"
+    Baixa o MODELO OFICIAL BRANDO para preenchimento e importação sem erro.
     """
-    if raw is None:
-        return 0.0
+    r = require_admin()
+    if r: return r
 
-    s = str(raw).strip()
-    if not s:
-        return 0.0
+    if openpyxl is None or Workbook is None:
+        return "openpyxl não está instalado no servidor. Adicione no requirements.txt", 500
 
-    # remove moeda e espaços
-    s = s.replace("R$", "").replace("r$", "").strip()
-    s = s.replace("\u00a0", " ").replace(" ", "")
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "imoveis"
 
-    # remove qualquer coisa que não seja dígito, ponto, vírgula, sinal
-    s = re.sub(r"[^0-9\-,.]", "", s)
+    headers = ["codigo", "tipo", "valor", "bairro", "descricao", "status"]
+    ws.append(headers)
 
-    # se tem . e , -> padrão BR: 1.234.567,89
-    if "." in s and "," in s:
-        s = s.replace(".", "").replace(",", ".")
-    # se tem só vírgula -> vira decimal
-    elif "," in s and "." not in s:
-        s = s.replace(",", ".")
-    # se tem só ponto -> já é decimal US/Excel ou inteiro com ponto (não mexe)
+    # Exemplo (ajuda a preencher certo)
+    ws.append([
+        "A001",
+        "apartamento",
+        260000.00,
+        "Ingleses",
+        "Exemplo: 2 quartos, 1 suíte, sacada com churrasqueira...",
+        "ativo"
+    ])
 
-    try:
-        # Decimal evita alguns bugs de float em parsing
-        return float(Decimal(s))
-    except (InvalidOperation, ValueError):
-        return 0.0
+    ws.freeze_panes = "A2"
 
+    # Larguras
+    col_widths = {"A": 12, "B": 18, "C": 14, "D": 18, "E": 60, "F": 12}
+    for col, w in col_widths.items():
+        ws.column_dimensions[col].width = w
 
-def sniff_csv_dialect(text: str):
-    """
-    Detecta delimitador (',' ou ';') e retorna DictReader pronto.
-    """
-    # pega só as primeiras linhas pra sniff
-    sample = "\n".join(text.splitlines()[:20])
-    # heurística simples: se tiver mais ';' que ',' no header, usa ';'
-    header = sample.splitlines()[0] if sample.splitlines() else ""
-    delim = ";" if header.count(";") > header.count(",") else ","
-    return delim
+    # Formata coluna valor como moeda no Excel (visual)
+    for row in ws.iter_rows(min_row=2, min_col=3, max_col=3, max_row=2000):
+        for cell in row:
+            cell.number_format = 'R$ #,##0.00'
+
+    # Validação dropdown status
+    if DataValidation is not None:
+        dv_status = DataValidation(type="list", formula1='"ativo,inativo"', allow_blank=True)
+        ws.add_data_validation(dv_status)
+        dv_status.add("F2:F2000")
+
+    # Aba de instruções
+    ws2 = wb.create_sheet("LEIA-ME")
+    ws2.append(["MODELO OFICIAL — Como preencher"])
+    ws2.append(["1) Não digite 'R$' no valor. Use número puro. Ex: 260000 ou 260000,00"])
+    ws2.append(["2) Status deve ser: ativo ou inativo (use o dropdown)"])
+    ws2.append(["3) Código é obrigatório e deve ser único (A001, C003, T010...)"])
+    ws2.append(["4) Mantenha os nomes das colunas exatamente como no header."])
+    ws2.column_dimensions["A"].width = 90
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+
+    return send_file(
+        out,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="modelo_imoveis_brando.xlsx"
+    )
 
 
 @app.route('/admin/export.xlsx')
@@ -398,7 +471,7 @@ def admin_export_xlsx():
     r = require_admin()
     if r: return r
 
-    if openpyxl is None:
+    if openpyxl is None or Workbook is None:
         return "openpyxl não está instalado no servidor. Adicione no requirements.txt", 500
 
     wb = Workbook()
@@ -418,8 +491,6 @@ def admin_export_xlsx():
             i.status or "ativo",
         ])
 
-    # formata coluna C (valor) como moeda BR no Excel (opcional)
-    # Se não quiser, pode remover esse loop.
     for row in ws.iter_rows(min_row=2, min_col=3, max_col=3):
         for cell in row:
             cell.number_format = 'R$ #,##0.00'
@@ -436,7 +507,7 @@ def admin_export_xlsx():
     )
 
 
-@app.route('/admin/export')  # mantém CSV antigo
+@app.route('/admin/export')  # mantém CSV
 def admin_export_csv():
     r = require_admin()
     if r: return r
@@ -449,7 +520,7 @@ def admin_export_csv():
         writer.writerow([
             i.codigo,
             i.tipo,
-            float(i.valor or 0),  # salva número puro no CSV (sem R$)
+            float(i.valor or 0),  # número puro no CSV (sem R$)
             i.bairro,
             (i.descricao or '').replace("\n", " "),
             i.status or "ativo"
@@ -472,38 +543,38 @@ def admin_import():
     - Fallback: CSV com delimitador detectado e encoding robusto
     """
     r = require_admin()
-    if r: 
+    if r:
         return r
 
-    file = request.files.get('csvfile')  # mantém o mesmo name do form pra não quebrar seu HTML
+    file = request.files.get('csvfile')  # mantém o mesmo name do form
     if not file or not file.filename:
         return redirect('/admin')
 
     filename = (file.filename or "").lower()
-
     count = 0
+
+    expected_headers = ["codigo", "tipo", "valor", "bairro", "descricao", "status"]
 
     # ------------------------
     # XLSX (Excel) - preferencial
     # ------------------------
-    if filename.endswith(".xlsx") or filename.endswith(".xlsm") or filename.endswith(".xltx") or filename.endswith(".xltm"):
+    if filename.endswith((".xlsx", ".xlsm", ".xltx", ".xltm")):
         if openpyxl is None:
             return "openpyxl não está instalado no servidor. Adicione no requirements.txt", 500
 
         wb = openpyxl.load_workbook(file, data_only=True)
         ws = wb.active
 
-        # espera header na linha 1
         headers = []
         for cell in ws[1]:
             headers.append((str(cell.value).strip().lower() if cell.value is not None else ""))
 
-        # mapeia colunas
+        missing = [h for h in expected_headers if h not in headers]
+        if missing:
+            return f"Planilha inválida. Faltando colunas: {', '.join(missing)}. Use o modelo oficial (/admin/modelo.xlsx).", 400
+
         def col_idx(name: str):
-            try:
-                return headers.index(name)
-            except ValueError:
-                return None
+            return headers.index(name)
 
         idx_codigo = col_idx("codigo")
         idx_tipo = col_idx("tipo")
@@ -511,10 +582,9 @@ def admin_import():
         idx_bairro = col_idx("bairro")
         idx_desc = col_idx("descricao")
         idx_status = col_idx("status")
-        idx_imagem = col_idx("imagem")  # opcional
 
-        if idx_codigo is None:
-            return "Planilha inválida: coluna 'codigo' é obrigatória.", 400
+        # opcional
+        idx_imagem = headers.index("imagem") if "imagem" in headers else None
 
         for row in ws.iter_rows(min_row=2, values_only=True):
             codigo = (str(row[idx_codigo]).strip() if row[idx_codigo] is not None else "")
@@ -526,22 +596,14 @@ def admin_import():
                 obj = Imovel(codigo=codigo)
                 db.session.add(obj)
 
-            if idx_tipo is not None:
-                obj.tipo = (str(row[idx_tipo]).strip() if row[idx_tipo] is not None else obj.tipo or "")
+            obj.tipo = (str(row[idx_tipo]).strip() if row[idx_tipo] is not None else obj.tipo or "")
+            obj.bairro = (str(row[idx_bairro]).strip() if row[idx_bairro] is not None else obj.bairro or "")
+            obj.descricao = (str(row[idx_desc]).strip() if row[idx_desc] is not None else obj.descricao or "")
+            obj.status = (str(row[idx_status]).strip().lower() if row[idx_status] is not None else (obj.status or "ativo"))
 
-            if idx_bairro is not None:
-                obj.bairro = (str(row[idx_bairro]).strip() if row[idx_bairro] is not None else obj.bairro or "")
+            obj.valor = parse_valor_brl(row[idx_valor])
 
-            if idx_desc is not None:
-                obj.descricao = (str(row[idx_desc]).strip() if row[idx_desc] is not None else obj.descricao or "")
-
-            if idx_status is not None:
-                obj.status = (str(row[idx_status]).strip().lower() if row[idx_status] is not None else (obj.status or "ativo"))
-
-            if idx_valor is not None:
-                obj.valor = parse_valor_brl(row[idx_valor])
-
-            # imagem opcional (só se vier e se o modelo tiver campo imagem)
+            # imagem opcional (se existir no modelo)
             if idx_imagem is not None and hasattr(obj, "imagem"):
                 img = (str(row[idx_imagem]).strip() if row[idx_imagem] is not None else "")
                 if img:
@@ -563,9 +625,14 @@ def admin_import():
         text = raw.decode('latin-1')
 
     delim = sniff_csv_dialect(text)
-
     stream = io.StringIO(text)
     reader = csv.DictReader(stream, delimiter=delim)
+
+    # valida header (modelo oficial)
+    csv_headers = [h.strip().lower() for h in (reader.fieldnames or [])]
+    missing = [h for h in expected_headers if h not in csv_headers]
+    if missing:
+        return f"CSV inválido. Faltando colunas: {', '.join(missing)}. Use o modelo oficial (/admin/modelo.xlsx).", 400
 
     for row in reader:
         codigo = (row.get('codigo') or '').strip()
@@ -583,13 +650,11 @@ def admin_import():
         obj.status = (row.get('status') or obj.status or 'ativo').strip().lower() or 'ativo'
 
         v = (row.get('valor') or '').strip()
-        if v:
-            obj.valor = parse_valor_brl(v)
+        obj.valor = parse_valor_brl(v)
 
-        # imagem opcional (só se existir no modelo)
         if hasattr(obj, "imagem"):
             img = (row.get('imagem') or '').strip()
-            if img and not getattr(obj, 'imagem', None):
+            if img:
                 obj.imagem = img
 
         count += 1
