@@ -34,12 +34,24 @@
           🛠️ Serviços
         </a>
 
-        <a href="/admin/export" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
-          ⬇️ Exportar CSV
+        <!-- XLSX como principal -->
+        <a href="/admin/modelo.xlsx" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          🧾 Baixar Modelo XLSX
         </a>
 
+        <a href="/admin/export.xlsx" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          📤 Exportar XLSX
+        </a>
+
+        <!-- CSV legado (opcional) -->
+        <a href="/admin/export" class="bg-white/90 text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-white transition">
+          ⬇️ Exportar CSV (legado)
+        </a>
+
+        <!-- Import (aceita xlsx e csv) -->
         <form action="/admin/import" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
-          <input type="file" name="csvfile" accept=".csv" class="text-xs bg-white rounded-md p-1 border" required />
+          <input type="file" name="csvfile" accept=".xlsx,.csv"
+                 class="text-xs bg-white rounded-md p-1 border" required />
           <button class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition">
             ⬆️ Importar
           </button>
@@ -49,6 +61,13 @@
            class="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition font-semibold">
            🚪 Sair
         </a>
+      </div>
+    </div>
+
+    <!-- dica rápida -->
+    <div class="max-w-7xl mx-auto px-4 pb-3">
+      <div class="text-xs opacity-90">
+        ✅ Recomendado: use <b>XLSX</b> (modelo oficial). CSV fica apenas como legado.
       </div>
     </div>
   </header>
