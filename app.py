@@ -556,7 +556,7 @@ def admin_import():
     if r:
         return r
 
-    file = request.files.get('csvfile')  # mantém o mesmo name do form
+    file = request.files.get('planilha')
     if not file or not file.filename:
         return redirect('/admin')
 
