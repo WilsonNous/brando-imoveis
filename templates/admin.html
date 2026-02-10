@@ -50,10 +50,13 @@
 
         <!-- Import (aceita xlsx e csv) -->
         <form action="/admin/import" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
-          <input type="file" name="csvfile" accept=".xlsx,.csv"
-                 class="text-xs bg-white rounded-md p-1 border" required />
+          <input type="file"
+                 name="planilha"
+                 accept=".xlsx,.xlsm,.xltx,.xltm,.csv"
+                 class="text-xs bg-white rounded-md p-1 border"
+                 required />
           <button class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition">
-            ⬆️ Importar
+            ⬆️ Importar Planilha
           </button>
         </form>
 
