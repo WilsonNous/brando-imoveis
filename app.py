@@ -116,7 +116,7 @@ app.logger.info("🚀 Brando Imóveis iniciado com pool seguro.")
 
 
 # ============================================================
-# HELPERS IMPORT/EXPORT (VALOR BRL + CSV DIALECT)
+# HELPERS IMPORT/EXPORT (VALOR BRL + CSV DIALECT + STATUS)
 # ============================================================
 
 def parse_valor_brl(raw) -> float:
@@ -164,6 +164,17 @@ def sniff_csv_dialect(text: str) -> str:
     header = sample.splitlines()[0] if sample.splitlines() else ""
     delim = ";" if header.count(";") > header.count(",") else ","
     return delim
+
+
+def normalize_status(raw, fallback="ativo") -> str:
+    """
+    Garante apenas 'ativo' ou 'inativo'.
+    Se vier qualquer outra coisa, usa fallback.
+    """
+    s = (str(raw).strip().lower() if raw is not None else "")
+    if s in ("ativo", "inativo"):
+        return s
+    return fallback or "ativo"
 
 
 # ============================================================
@@ -358,7 +369,7 @@ def admin_save():
     obj.tipo = form.get('tipo')
     obj.bairro = form.get('bairro')
     obj.descricao = form.get('descricao')
-    obj.status = form.get('status', 'ativo')
+    obj.status = normalize_status(form.get('status'), fallback=obj.status or "ativo")
 
     try:
         obj.valor = float((form.get('valor') or "0").replace(',', '.'))
@@ -396,7 +407,7 @@ def admin_save():
 
 
 # ============================================================
-# EXPORTAÇÃO / IMPORTAÇÃO (Excel XLSX preferencial + CSV fallback)
+# EXPORTAÇÃO / IMPORTAÇÃO (Excel XLSX principal + CSV fallback)
 # ============================================================
 
 @app.route('/admin/modelo.xlsx')
@@ -448,9 +459,9 @@ def admin_modelo_xlsx():
     # Aba de instruções
     ws2 = wb.create_sheet("LEIA-ME")
     ws2.append(["MODELO OFICIAL — Como preencher"])
-    ws2.append(["1) Não digite 'R$' no valor. Use número puro. Ex: 260000 ou 260000,00"])
-    ws2.append(["2) Status deve ser: ativo ou inativo (use o dropdown)"])
-    ws2.append(["3) Código é obrigatório e deve ser único (A001, C003, T010...)"])
+    ws2.append(["1) Valor: use número puro. Ex: 260000 ou 260000,00 (não digite 'R$')."])
+    ws2.append(["2) Status deve ser: ativo ou inativo (use o dropdown)."])
+    ws2.append(["3) Código é obrigatório e deve ser único (A001, C003, T010...)."])
     ws2.append(["4) Mantenha os nomes das colunas exatamente como no header."])
     ws2.column_dimensions["A"].width = 90
 
@@ -478,7 +489,6 @@ def admin_export_xlsx():
     ws = wb.active
     ws.title = "imoveis"
 
-    # Header (modelo oficial)
     ws.append(["codigo", "tipo", "valor", "bairro", "descricao", "status"])
 
     for i in Imovel.query.order_by(Imovel.id).all():
@@ -488,7 +498,7 @@ def admin_export_xlsx():
             float(i.valor or 0),
             i.bairro,
             i.descricao or "",
-            i.status or "ativo",
+            normalize_status(i.status, "ativo"),
         ])
 
     for row in ws.iter_rows(min_row=2, min_col=3, max_col=3):
@@ -507,7 +517,7 @@ def admin_export_xlsx():
     )
 
 
-@app.route('/admin/export')  # mantém CSV
+@app.route('/admin/export')  # mantém CSV (fallback)
 def admin_export_csv():
     r = require_admin()
     if r: return r
@@ -523,7 +533,7 @@ def admin_export_csv():
             float(i.valor or 0),  # número puro no CSV (sem R$)
             i.bairro,
             (i.descricao or '').replace("\n", " "),
-            i.status or "ativo"
+            normalize_status(i.status, "ativo")
         ])
 
     output = si.getvalue().encode('utf-8')
@@ -539,7 +549,7 @@ def admin_export_csv():
 def admin_import():
     """
     Importa tanto XLSX quanto CSV.
-    - Preferencial: XLSX (Excel)
+    - Principal: XLSX (Excel)
     - Fallback: CSV com delimitador detectado e encoding robusto
     """
     r = require_admin()
@@ -556,7 +566,7 @@ def admin_import():
     expected_headers = ["codigo", "tipo", "valor", "bairro", "descricao", "status"]
 
     # ------------------------
-    # XLSX (Excel) - preferencial
+    # XLSX (principal)
     # ------------------------
     if filename.endswith((".xlsx", ".xlsm", ".xltx", ".xltm")):
         if openpyxl is None:
@@ -571,7 +581,10 @@ def admin_import():
 
         missing = [h for h in expected_headers if h not in headers]
         if missing:
-            return f"Planilha inválida. Faltando colunas: {', '.join(missing)}. Use o modelo oficial (/admin/modelo.xlsx).", 400
+            return (
+                f"Planilha inválida. Faltando colunas: {', '.join(missing)}. "
+                f"Use o modelo oficial (/admin/modelo.xlsx)."
+            ), 400
 
         def col_idx(name: str):
             return headers.index(name)
@@ -582,11 +595,13 @@ def admin_import():
         idx_bairro = col_idx("bairro")
         idx_desc = col_idx("descricao")
         idx_status = col_idx("status")
-
-        # opcional
-        idx_imagem = headers.index("imagem") if "imagem" in headers else None
+        idx_imagem = headers.index("imagem") if "imagem" in headers else None  # opcional
 
         for row in ws.iter_rows(min_row=2, values_only=True):
+            # pula linha totalmente vazia
+            if not row or all(v is None or str(v).strip() == "" for v in row):
+                continue
+
             codigo = (str(row[idx_codigo]).strip() if row[idx_codigo] is not None else "")
             if not codigo:
                 continue
@@ -596,11 +611,11 @@ def admin_import():
                 obj = Imovel(codigo=codigo)
                 db.session.add(obj)
 
-            obj.tipo = (str(row[idx_tipo]).strip() if row[idx_tipo] is not None else obj.tipo or "")
-            obj.bairro = (str(row[idx_bairro]).strip() if row[idx_bairro] is not None else obj.bairro or "")
-            obj.descricao = (str(row[idx_desc]).strip() if row[idx_desc] is not None else obj.descricao or "")
-            obj.status = (str(row[idx_status]).strip().lower() if row[idx_status] is not None else (obj.status or "ativo"))
+            obj.tipo = (str(row[idx_tipo]).strip() if row[idx_tipo] is not None else (obj.tipo or ""))
+            obj.bairro = (str(row[idx_bairro]).strip() if row[idx_bairro] is not None else (obj.bairro or ""))
+            obj.descricao = (str(row[idx_desc]).strip() if row[idx_desc] is not None else (obj.descricao or ""))
 
+            obj.status = normalize_status(row[idx_status], fallback=obj.status or "ativo")
             obj.valor = parse_valor_brl(row[idx_valor])
 
             # imagem opcional (se existir no modelo)
@@ -616,11 +631,11 @@ def admin_import():
         return redirect('/admin')
 
     # ------------------------
-    # CSV - fallback
+    # CSV (fallback)
     # ------------------------
     raw = file.stream.read()
     try:
-        text = raw.decode('utf-8-sig')  # bom pra Excel
+        text = raw.decode('utf-8-sig')
     except UnicodeDecodeError:
         text = raw.decode('latin-1')
 
@@ -628,11 +643,13 @@ def admin_import():
     stream = io.StringIO(text)
     reader = csv.DictReader(stream, delimiter=delim)
 
-    # valida header (modelo oficial)
     csv_headers = [h.strip().lower() for h in (reader.fieldnames or [])]
     missing = [h for h in expected_headers if h not in csv_headers]
     if missing:
-        return f"CSV inválido. Faltando colunas: {', '.join(missing)}. Use o modelo oficial (/admin/modelo.xlsx).", 400
+        return (
+            f"CSV inválido. Faltando colunas: {', '.join(missing)}. "
+            f"Use o modelo oficial (/admin/modelo.xlsx)."
+        ), 400
 
     for row in reader:
         codigo = (row.get('codigo') or '').strip()
@@ -647,10 +664,11 @@ def admin_import():
         obj.tipo = (row.get('tipo') or obj.tipo or '').strip()
         obj.bairro = (row.get('bairro') or obj.bairro or '').strip()
         obj.descricao = (row.get('descricao') or obj.descricao or '').strip()
-        obj.status = (row.get('status') or obj.status or 'ativo').strip().lower() or 'ativo'
+        obj.status = normalize_status(row.get('status'), fallback=obj.status or "ativo")
 
         v = (row.get('valor') or '').strip()
-        obj.valor = parse_valor_brl(v)
+        if v:
+            obj.valor = parse_valor_brl(v)
 
         if hasattr(obj, "imagem"):
             img = (row.get('imagem') or '').strip()
