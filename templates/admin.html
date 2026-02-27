@@ -1,75 +1,242 @@
-<!-- ======================================== -->
-<!-- LISTAGEM -->
-<!-- ======================================== -->
-<section class="md:col-span-2 bg-white p-4 rounded-xl shadow-md border border-gray-100">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | Brando Imóveis</title>
 
-  <div class="flex justify-between items-center mb-3">
-    <h2 class="font-semibold text-[color:var(--brand-blue)] text-lg">Imóveis cadastrados</h2>
+  <meta name="author" content="Brando Imóveis - CRECI 61150" />
+  <meta name="description" content="Painel administrativo Brando Imóveis | CRECI 61150 | Rua Intendente Antônio Damasco, 2330 - Ratones / Florianópolis." />
 
-    <form method="get" action="/admin" class="flex gap-2">
-      <input name="q" placeholder="Filtrar por texto" value="{{ request.args.get('q','') }}" class="field text-sm">
-      <button class="bg-gray-800 text-white px-3 py-2 rounded-md hover:bg-gray-900 transition text-sm">Filtrar</button>
-    </form>
-  </div>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="/static/css/main.css" rel="stylesheet" />
+  
+  <!-- CSS extra para compatibilidade com line-clamp (opcional, se quiser multi-linhas) -->
+  <style>
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
 
-  <div class="overflow-auto max-h-[70vh] rounded-md border border-gray-200">
-    <table class="min-w-full text-sm">
-      <thead class="bg-[color:var(--brand-blue)] text-white">
-        <tr class="text-left">
-          <th class="py-2 px-2">#</th>
-          <th class="py-2 px-2">Imagem</th>
-          <th class="py-2 px-2">Código</th>
-          <th class="py-2 px-2">Descrição</th> <!-- NOVA COLUNA -->
-          <th class="py-2 px-2">Tipo</th>
-          <th class="py-2 px-2">Bairro</th>
-          <th class="py-2 px-2">Valor</th>
-          <th class="py-2 px-2">Status</th>
-          <th class="py-2 px-2">Ações</th>
-        </tr>
-      </thead>
+<body class="bg-gray-50 text-gray-900 font-sans">
 
-      <tbody>
-      {% for i in imoveis %}
-        <tr class="border-b hover:bg-gray-50 transition">
-          <td class="py-2 px-2">{{ i.id }}</td>
+  <!-- ===================================================== -->
+  <!-- HEADER -->
+  <!-- ===================================================== -->
+  <header class="bg-[color:var(--brand-blue)] text-white shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center p-4 gap-2">
 
-          <td class="py-2 px-2">
-            {% if i.capa_url %}
-              <img src="{{ i.capa_url }}"
-                   class="w-12 h-12 rounded-md object-cover border border-gray-200 shadow-sm">
-            {% else %}
-              <div class="w-12 h-12 bg-gray-100 border flex items-center justify-center rounded text-gray-400 text-xs">
-                sem
+      <div>
+        <h1 class="text-xl font-bold">Painel Administrativo - Brando Imóveis</h1>
+        <span class="text-sm opacity-90">CRECI 61150</span>
+      </div>
+
+      <div class="flex flex-wrap gap-2 items-center text-sm">
+        <a href="/" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          🏠 Ver site
+        </a>
+
+        <a href="/admin/servicos" class="bg-yellow-500 text-white px-3 py-2 rounded-md hover:bg-yellow-600 transition">
+          🛠️ Serviços
+        </a>
+
+        <a href="/admin/modelo.xlsx" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          🧾 Baixar Modelo XLSX
+        </a>
+
+        <a href="/admin/export.xlsx" class="bg-white text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-gray-100 transition">
+          📤 Exportar XLSX
+        </a>
+
+        <a href="/admin/export" class="bg-white/90 text-[color:var(--brand-blue)] px-3 py-2 rounded-md hover:bg-white transition">
+          ⬇️ Exportar CSV (legado)
+        </a>
+
+        <form action="/admin/import" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+          <input type="file"
+                 name="planilha"
+                 accept=".xlsx,.xlsm,.xltx,.xltm,.csv"
+                 class="text-xs bg-white rounded-md p-1 border"
+                 required />
+          <button class="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition">
+            ⬆️ Importar Planilha
+          </button>
+        </form>
+
+        <a href="/admin/logout"
+           class="bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition font-semibold">
+           🚪 Sair
+        </a>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 pb-3">
+      <div class="text-xs opacity-90">
+        ✅ Recomendado: use <b>XLSX</b> (modelo oficial). CSV fica apenas como legado.
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================== -->
+  <!-- CONTEÚDO -->
+  <!-- ===================================================== -->
+  <main class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
+
+    <!-- ======================================== -->
+    <!-- FORM CADASTRO / EDIÇÃO -->
+    <!-- ======================================== -->
+    <section class="md:col-span-1 bg-white p-4 rounded-xl shadow-md border border-gray-100">
+      <h2 class="font-semibold mb-3 text-[color:var(--brand-blue)] text-lg">Cadastrar / Editar Imóvel</h2>
+
+      <form action="/admin/save" method="post" enctype="multipart/form-data" class="grid gap-3">
+        <input type="hidden" name="id" value="{{ imovel.id if imovel else '' }}">
+
+        <input name="codigo" placeholder="Código (ex: A001)" value="{{ imovel.codigo if imovel else '' }}" required class="field">
+        <input name="tipo" placeholder="Tipo (Casa, Apto...)" value="{{ imovel.tipo if imovel else '' }}" required class="field">
+        <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="field">
+        <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="field">
+
+        <label class="text-sm font-semibold text-gray-600">Fotos do imóvel (múltiplas)</label>
+        <input type="file" name="imagens" multiple accept="image/*"
+               class="border p-2 rounded-md bg-gray-50 focus:ring-2 focus:ring-[color:var(--brand-blue)]">
+
+        <small class="text-gray-500 text-xs">Você pode selecionar várias fotos ao mesmo tempo.</small>
+
+        {% if imovel and imovel.capa_url %}
+          <div class="mt-3">
+            <p class="text-sm text-gray-700 font-medium">Capa atual:</p>
+            <img src="{{ imovel.capa_url }}" class="rounded-md shadow-md mt-1 w-full max-h-48 object-cover">
+          </div>
+        {% endif %}
+
+        {% if imovel and imovel.fotos %}
+          <div class="mt-4">
+            <p class="text-sm font-semibold text-gray-700 mb-2">Galeria de fotos:</p>
+            <div class="grid grid-cols-3 gap-3">
+              {% for foto in imovel.fotos %}
+              <div class="relative group border rounded-lg overflow-hidden shadow-sm bg-gray-100">
+                <img src="/foto/{{ foto.id }}" class="w-full h-24 object-cover">
+                {% if foto.is_capa %}
+                  <span class="absolute top-1 left-1 bg-green-600 text-white text-xs px-2 py-1 rounded">CAPA</span>
+                {% endif %}
+                <div class="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-2 text-xs">
+                  <form action="/admin/imovel/{{ imovel.id }}/set_capa/{{ foto.id }}" method="POST">
+                    <button class="bg-yellow-400 hover:bg-yellow-500 text-black px-2 py-1 rounded">Definir capa</button>
+                  </form>
+                  <form action="/admin/imovel/{{ imovel.id }}/remove_foto/{{ foto.id }}" method="POST"
+                        onsubmit="return confirm('Remover esta foto?');">
+                    <button class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">Remover</button>
+                  </form>
+                </div>
               </div>
-            {% endif %}
-          </td>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
 
-          <td class="py-2 px-2 font-semibold">{{ i.codigo }}</td>
-          
-          <!-- NOVA CÉLULA: DESCRIÇÃO -->
-          <td class="py-2 px-2 max-w-xs">
-            <span class="text-gray-700 line-clamp-2" title="{{ i.descricao or 'Sem descrição' }}">
-              {{ i.descricao or '—' }}
-            </span>
-          </td>
+        <textarea name="descricao" placeholder="Descrição" class="field h-24">{{ imovel.descricao if imovel else '' }}</textarea>
 
-          <td class="py-2 px-2">{{ i.tipo }}</td>
-          <td class="py-2 px-2">{{ i.bairro }}</td>
-          <td class="py-2 px-2 text-[color:var(--brand-blue)] font-semibold">{{ i.valor | brl }}</td>
-          <td class="py-2 px-2">{{ i.status }}</td>
+        <select name="status" class="field">
+          <option value="ativo" {{ 'selected' if (imovel and imovel.status=='ativo') else '' }}>Ativo</option>
+          <option value="inativo" {{ 'selected' if (imovel and imovel.status=='inativo') else '' }}>Inativo</option>
+        </select>
 
-          <td class="py-2 px-2 flex gap-3">
-            <a href="/admin/edit/{{ i.id }}" class="text-[color:var(--brand-blue)] underline hover:opacity-80">✏️ Editar</a>
-            <a href="/admin/delete/{{ i.id }}"
-               class="text-red-600 underline hover:opacity-80"
-               onclick="return confirm('Excluir este imóvel?');">
-               🗑️ Excluir
-            </a>
-          </td>
-        </tr>
-      {% endfor %}
-      </tbody>
+        <button class="btn-brand w-full font-semibold">💾 Salvar</button>
+      </form>
+    </section>
 
-    </table>
-  </div>
-</section>
+    <!-- ======================================== -->
+    <!-- LISTAGEM (CORRIGIDA) -->
+    <!-- ======================================== -->
+    <section class="md:col-span-2 bg-white p-4 rounded-xl shadow-md border border-gray-100">
+
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="font-semibold text-[color:var(--brand-blue)] text-lg">Imóveis cadastrados</h2>
+
+        <form method="get" action="/admin" class="flex gap-2">
+          <input name="q" placeholder="Filtrar por texto" value="{{ request.args.get('q','') }}" class="field text-sm">
+          <button class="bg-gray-800 text-white px-3 py-2 rounded-md hover:bg-gray-900 transition text-sm">Filtrar</button>
+        </form>
+      </div>
+
+      <div class="overflow-auto max-h-[70vh] rounded-md border border-gray-200">
+        <table class="min-w-full text-sm table-fixed">
+          <thead class="bg-[color:var(--brand-blue)] text-white">
+            <tr class="text-left">
+              <th class="py-2 px-2 w-12">#</th>
+              <th class="py-2 px-2 w-16">Imagem</th>
+              <th class="py-2 px-2 w-24">Código</th>
+              <th class="py-2 px-2 w-64">Descrição</th>
+              <th class="py-2 px-2 w-24">Tipo</th>
+              <th class="py-2 px-2 w-32">Bairro</th>
+              <th class="py-2 px-2 w-28">Valor</th>
+              <th class="py-2 px-2 w-20">Status</th>
+              <th class="py-2 px-2 w-32">Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+          {% for i in imoveis %}
+            <tr class="border-b hover:bg-gray-50 transition">
+              <td class="py-2 px-2">{{ i.id }}</td>
+
+              <td class="py-2 px-2">
+                {% if i.capa_url %}
+                  <img src="{{ i.capa_url }}"
+                       class="w-12 h-12 rounded-md object-cover border border-gray-200 shadow-sm">
+                {% else %}
+                  <div class="w-12 h-12 bg-gray-100 border flex items-center justify-center rounded text-gray-400 text-xs">
+                    sem
+                  </div>
+                {% endif %}
+              </td>
+
+              <td class="py-2 px-2 font-semibold truncate" title="{{ i.codigo }}">{{ i.codigo }}</td>
+              
+              <!-- DESCRIÇÃO COM TRUNCATE + TOOLTIP -->
+              <td class="py-2 px-2">
+                <span class="block truncate text-gray-700" title="{{ i.descricao or 'Sem descrição' }}">
+                  {{ i.descricao or '—' }}
+                </span>
+              </td>
+
+              <td class="py-2 px-2 truncate" title="{{ i.tipo }}">{{ i.tipo }}</td>
+              <td class="py-2 px-2 truncate" title="{{ i.bairro }}">{{ i.bairro }}</td>
+              <td class="py-2 px-2 text-[color:var(--brand-blue)] font-semibold">{{ i.valor | brl }}</td>
+              <td class="py-2 px-2">{{ i.status }}</td>
+
+              <td class="py-2 px-2 flex gap-2 flex-wrap">
+                <a href="/admin/edit/{{ i.id }}" class="text-[color:var(--brand-blue)] underline hover:opacity-80 text-xs">✏️ Editar</a>
+                <a href="/admin/delete/{{ i.id }}"
+                   class="text-red-600 underline hover:opacity-80 text-xs"
+                   onclick="return confirm('Excluir este imóvel?');">
+                   🗑️ Excluir
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="text-center text-sm text-gray-600 mt-8 italic py-4 border-t border-gray-200">
+    "Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos." — Provérbios 16:3
+  </footer>
+
+</body>
+</html>
