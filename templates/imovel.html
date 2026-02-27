@@ -28,13 +28,13 @@
 
     <!-- BOTÃO ANTERIOR -->
     <button id="prev"
-            class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full">
+            class="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full z-10">
       ◀
     </button>
 
     <!-- BOTÃO PRÓXIMO -->
     <button id="next"
-            class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full">
+            class="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow px-3 py-2 rounded-full z-10">
       ▶
     </button>
 
@@ -57,9 +57,19 @@
       {{ imovel.tipo }} - {{ imovel.bairro }}
     </h2>
 
-    <p class="text-2xl price mb-3 font-semibold text-gray-800">
+    <p class="text-2xl price mb-2 font-semibold text-gray-800">
       {{ imovel.valor | brl }}
     </p>
+
+    <!-- CÓDIGO DO IMÓVEL (NOVO) -->
+    {% if imovel.codigo %}
+    <div class="inline-flex items-center gap-2 mb-4">
+      <span class="bg-[color:var(--brand-blue)]/10 text-[color:var(--brand-blue)] 
+                   px-3 py-1 rounded-full text-sm font-medium border border-[color:var(--brand-blue)]/20">
+        🏷️ Código: <strong>{{ imovel.codigo }}</strong>
+      </span>
+    </div>
+    {% endif %}
 
     <p class="text-gray-700 leading-relaxed mb-5">{{ imovel.descricao }}</p>
 
