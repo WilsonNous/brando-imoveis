@@ -33,7 +33,7 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-height: 6rem; /* Ajuste conforme line-height padrão (1.5rem x 4) */
+      max-height: 6rem;
       line-height: 1.5rem;
     }
   </style>
@@ -104,23 +104,43 @@
   <main class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
 
     <!-- ======================================== -->
-    <!-- FORM CADASTRO / EDIÇÃO (COM DESCRIÇÃO APÓS CÓDIGO) -->
+    <!-- FORM CADASTRO / EDIÇÃO -->
     <!-- ======================================== -->
     <section class="md:col-span-1 bg-white p-4 rounded-xl shadow-md border border-gray-100">
       <h2 class="font-semibold mb-3 text-[color:var(--brand-blue)] text-lg">Cadastrar / Editar Imóvel</h2>
 
-      <form action="/admin/save" method="post" enctype="multipart/form-data" class="grid gap-3">
+      <form action="/admin/save" method="post" enctype="multipart/form-data" class="grid gap-3" id="form-imovel">
         <input type="hidden" name="id" value="{{ imovel.id if imovel else '' }}">
 
         <!-- CÓDIGO -->
         <input name="codigo" placeholder="Código (ex: A001)" value="{{ imovel.codigo if imovel else '' }}" required class="field">
 
-        <!-- DESCRIÇÃO (MOVIDA PARA APÓS O CÓDIGO) -->
+        <!-- DESCRIÇÃO (APÓS O CÓDIGO) -->
         <textarea name="descricao" placeholder="Descrição do imóvel" class="field h-32">{{ imovel.descricao if imovel else '' }}</textarea>
 
         <!-- DEMAIS CAMPOS -->
         <input name="tipo" placeholder="Tipo (Casa, Apto...)" value="{{ imovel.tipo if imovel else '' }}" required class="field">
-        <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="field">
+        
+        <!-- VALOR COM FORMATAÇÃO BRL VISUAL -->
+        <div class="relative">
+          <input name="valor" 
+                 id="input-valor"
+                 placeholder="Valor (ex: 550000)" 
+                 value="{{ imovel.valor if imovel else '' }}" 
+                 required 
+                 class="field w-full"
+                 inputmode="decimal"
+                 pattern="[0-9]+([.,][0-9]+)?"
+                 title="Digite apenas números. Ex: 954000 ou 954000.00">
+          
+          <!-- Helper visual com valor formatado em BRL (apenas na edição) -->
+          {% if imovel and imovel.valor %}
+          <small class="text-gray-500 text-xs mt-1 block">
+            💰 Valor atual: <strong>{{ imovel.valor | brl }}</strong>
+          </small>
+          {% endif %}
+        </div>
+        
         <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="field">
 
         <label class="text-sm font-semibold text-gray-600">Fotos do imóvel (múltiplas)</label>
@@ -191,7 +211,7 @@
               <th class="py-2 px-2 w-12">#</th>
               <th class="py-2 px-2 w-16">Imagem</th>
               <th class="py-2 px-2 w-24">Código</th>
-              <th class="py-2 px-2 w-72">Descrição</th> <!-- Largura aumentada para 4 linhas -->
+              <th class="py-2 px-2 w-72">Descrição</th>
               <th class="py-2 px-2 w-24">Tipo</th>
               <th class="py-2 px-2 w-32">Bairro</th>
               <th class="py-2 px-2 w-28">Valor</th>
@@ -250,6 +270,55 @@
   <footer class="text-center text-sm text-gray-600 mt-8 italic py-4 border-t border-gray-200">
     "Consagre ao Senhor tudo o que você faz, e os seus planos serão bem-sucedidos." — Provérbios 16:3
   </footer>
+
+  <!-- ===================================================== -->
+  <!-- SCRIPT OPCIONAL: FORMATAR VALOR EM TEMPO REAL NO INPUT -->
+  <!-- ===================================================== -->
+  <script>
+    // Formata o campo de valor enquanto o usuário digita (opcional)
+    document.addEventListener('DOMContentLoaded', function() {
+      const inputValor = document.getElementById('input-valor');
+      const form = document.getElementById('form-imovel');
+      
+      if (!inputValor) return;
+      
+      // Formata ao carregar (para edição)
+      if (inputValor.value) {
+        const num = parseFloat(inputValor.value.replace(',', '.'));
+        if (!isNaN(num)) {
+          inputValor.dataset.raw = inputValor.value; // guarda valor bruto
+          inputValor.value = new Intl.NumberFormat('pt-BR', { 
+            style: 'currency', 
+            currency: 'BRL',
+            minimumFractionDigits: 0 
+          }).format(num);
+        }
+      }
+      
+      // Formata enquanto digita
+      inputValor.addEventListener('input', function(e) {
+        let raw = e.target.value.replace(/[^\d,\.]/g, '').replace(',', '.');
+        const num = parseFloat(raw);
+        if (!isNaN(num) && raw.length > 0) {
+          e.target.dataset.raw = num; // guarda número puro para envio
+          e.target.value = new Intl.NumberFormat('pt-BR', { 
+            style: 'currency', 
+            currency: 'BRL',
+            minimumFractionDigits: 0 
+          }).format(num);
+        }
+      });
+      
+      // Antes de enviar, restaura o valor bruto
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          if (inputValor.dataset.raw !== undefined) {
+            inputValor.value = inputValor.dataset.raw;
+          }
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>
