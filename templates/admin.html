@@ -11,7 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="/static/css/main.css" rel="stylesheet" />
   
-  <!-- CSS extra para compatibilidade com line-clamp (opcional, se quiser multi-linhas) -->
+  <!-- CSS extra para compatibilidade com line-clamp -->
   <style>
     .line-clamp-2 {
       display: -webkit-box;
@@ -26,6 +26,15 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+    .line-clamp-4 {
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-height: 6rem; /* Ajuste conforme line-height padrão (1.5rem x 4) */
+      line-height: 1.5rem;
     }
   </style>
 </head>
@@ -95,7 +104,7 @@
   <main class="max-w-7xl mx-auto p-6 grid md:grid-cols-3 gap-6">
 
     <!-- ======================================== -->
-    <!-- FORM CADASTRO / EDIÇÃO -->
+    <!-- FORM CADASTRO / EDIÇÃO (COM DESCRIÇÃO APÓS CÓDIGO) -->
     <!-- ======================================== -->
     <section class="md:col-span-1 bg-white p-4 rounded-xl shadow-md border border-gray-100">
       <h2 class="font-semibold mb-3 text-[color:var(--brand-blue)] text-lg">Cadastrar / Editar Imóvel</h2>
@@ -103,7 +112,13 @@
       <form action="/admin/save" method="post" enctype="multipart/form-data" class="grid gap-3">
         <input type="hidden" name="id" value="{{ imovel.id if imovel else '' }}">
 
+        <!-- CÓDIGO -->
         <input name="codigo" placeholder="Código (ex: A001)" value="{{ imovel.codigo if imovel else '' }}" required class="field">
+
+        <!-- DESCRIÇÃO (MOVIDA PARA APÓS O CÓDIGO) -->
+        <textarea name="descricao" placeholder="Descrição do imóvel" class="field h-32">{{ imovel.descricao if imovel else '' }}</textarea>
+
+        <!-- DEMAIS CAMPOS -->
         <input name="tipo" placeholder="Tipo (Casa, Apto...)" value="{{ imovel.tipo if imovel else '' }}" required class="field">
         <input name="valor" placeholder="Valor (ex: 550000)" value="{{ imovel.valor if imovel else '' }}" required class="field">
         <input name="bairro" placeholder="Bairro" value="{{ imovel.bairro if imovel else '' }}" required class="field">
@@ -146,8 +161,6 @@
           </div>
         {% endif %}
 
-        <textarea name="descricao" placeholder="Descrição" class="field h-24">{{ imovel.descricao if imovel else '' }}</textarea>
-
         <select name="status" class="field">
           <option value="ativo" {{ 'selected' if (imovel and imovel.status=='ativo') else '' }}>Ativo</option>
           <option value="inativo" {{ 'selected' if (imovel and imovel.status=='inativo') else '' }}>Inativo</option>
@@ -158,7 +171,7 @@
     </section>
 
     <!-- ======================================== -->
-    <!-- LISTAGEM (CORRIGIDA) -->
+    <!-- LISTAGEM (COM DESCRIÇÃO EM 4 LINHAS) -->
     <!-- ======================================== -->
     <section class="md:col-span-2 bg-white p-4 rounded-xl shadow-md border border-gray-100">
 
@@ -178,7 +191,7 @@
               <th class="py-2 px-2 w-12">#</th>
               <th class="py-2 px-2 w-16">Imagem</th>
               <th class="py-2 px-2 w-24">Código</th>
-              <th class="py-2 px-2 w-64">Descrição</th>
+              <th class="py-2 px-2 w-72">Descrição</th> <!-- Largura aumentada para 4 linhas -->
               <th class="py-2 px-2 w-24">Tipo</th>
               <th class="py-2 px-2 w-32">Bairro</th>
               <th class="py-2 px-2 w-28">Valor</th>
@@ -205,9 +218,9 @@
 
               <td class="py-2 px-2 font-semibold truncate" title="{{ i.codigo }}">{{ i.codigo }}</td>
               
-              <!-- DESCRIÇÃO COM TRUNCATE + TOOLTIP -->
-              <td class="py-2 px-2">
-                <span class="block truncate text-gray-700" title="{{ i.descricao or 'Sem descrição' }}">
+              <!-- DESCRIÇÃO COM LINE-CLAMP-4 + TOOLTIP -->
+              <td class="py-2 px-2 align-top">
+                <span class="block line-clamp-4 text-gray-700" title="{{ i.descricao or 'Sem descrição' }}">
                   {{ i.descricao or '—' }}
                 </span>
               </td>
