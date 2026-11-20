@@ -573,65 +573,75 @@ def admin_import():
     # ------------------------
     if filename.endswith((".xlsx", ".xlsm", ".xltx", ".xltm")):
         if openpyxl is None:
-            return "openpyxl não está instalado no servidor. Adicione no requirements.txt", 500
+            return "Biblioteca openpyxl indisponível.", 500
 
-        wb = openpyxl.load_workbook(file, data_only=True)
-        ws = wb.active
+        try:
+            wb = openpyxl.load_workbook(file.stream, read_only=True, data_only=True)
+            ws = wb["imoveis"] if "imoveis" in wb.sheetnames else wb.active
+            rows = ws.iter_rows(values_only=True)
+            first = next(rows, None)
+            if first is None:
+                return "Planilha vazia. Utilize o modelo oficial.", 400
 
-        headers = []
-        for cell in ws[1]:
-            headers.append((str(cell.value).strip().lower() if cell.value is not None else ""))
+            headers = [
+                str(v).strip().lower() if v is not None else ""
+                for v in first
+            ]
+            missing = [h for h in expected_headers if h not in headers]
+            if missing:
+                return (
+                    "Planilha inválida. Colunas ausentes: "
+                    + ", ".join(missing)
+                    + ". Baixe o modelo oficial."
+                ), 400
 
-        missing = [h for h in expected_headers if h not in headers]
-        if missing:
-            return (
-                f"Planilha inválida. Faltando colunas: {', '.join(missing)}. "
-                f"Use o modelo oficial (/admin/modelo.xlsx)."
-            ), 400
+            positions = {h: headers.index(h) for h in expected_headers}
+            idx_imagem = headers.index("imagem") if "imagem" in headers else None
 
-        def col_idx(name: str):
-            return headers.index(name)
+            def cell(row, field):
+                index = positions[field]
+                return row[index] if index < len(row) else None
 
-        idx_codigo = col_idx("codigo")
-        idx_tipo = col_idx("tipo")
-        idx_valor = col_idx("valor")
-        idx_bairro = col_idx("bairro")
-        idx_desc = col_idx("descricao")
-        idx_status = col_idx("status")
-        idx_imagem = headers.index("imagem") if "imagem" in headers else None  # opcional
+            count = 0
+            for line_number, row in enumerate(rows, start=2):
+                if not row or all(v is None or str(v).strip() == "" for v in row):
+                    continue
 
-        for row in ws.iter_rows(min_row=2, values_only=True):
-            # pula linha totalmente vazia
-            if not row or all(v is None or str(v).strip() == "" for v in row):
-                continue
+                codigo = str(cell(row, "codigo") or "").strip()
+                tipo = str(cell(row, "tipo") or "").strip()
+                valor_raw = cell(row, "valor")
+                if not codigo or not tipo or valor_raw is None or str(valor_raw).strip() == "":
+                    raise ValueError(f"Linha {line_number}: código, tipo e valor são obrigatórios.")
 
-            codigo = (str(row[idx_codigo]).strip() if row[idx_codigo] is not None else "")
-            if not codigo:
-                continue
+                valor = parse_valor_brl(valor_raw)
+                if not 0 <= valor <= 1_000_000_000_000:
+                    raise ValueError(f"Linha {line_number}: valor fora do intervalo permitido.")
 
-            obj = Imovel.query.filter_by(codigo=codigo).first()
-            if not obj:
-                obj = Imovel(codigo=codigo)
-                db.session.add(obj)
+                obj = Imovel.query.filter_by(codigo=codigo).first()
+                if obj is None:
+                    obj = Imovel(codigo=codigo)
+                    db.session.add(obj)
 
-            obj.tipo = (str(row[idx_tipo]).strip() if row[idx_tipo] is not None else (obj.tipo or ""))
-            obj.bairro = (str(row[idx_bairro]).strip() if row[idx_bairro] is not None else (obj.bairro or ""))
-            obj.descricao = (str(row[idx_desc]).strip() if row[idx_desc] is not None else (obj.descricao or ""))
+                obj.tipo = tipo
+                obj.valor = valor
+                obj.bairro = str(cell(row, "bairro") or "").strip()
+                obj.descricao = str(cell(row, "descricao") or "").strip()
+                obj.status = normalize_status(cell(row, "status"), fallback=obj.status or "ativo")
+                if idx_imagem is not None and idx_imagem < len(row) and row[idx_imagem]:
+                    obj.imagem = str(row[idx_imagem]).strip()
+                count += 1
 
-            obj.status = normalize_status(row[idx_status], fallback=obj.status or "ativo")
-            obj.valor = parse_valor_brl(row[idx_valor])
-
-            # imagem opcional (se existir no modelo)
-            if idx_imagem is not None and hasattr(obj, "imagem"):
-                img = (str(row[idx_imagem]).strip() if row[idx_imagem] is not None else "")
-                if img:
-                    obj.imagem = img
-
-            count += 1
-
-        db.session.commit()
-        app.logger.info(f"✅ Importados/atualizados via XLSX: {count}")
-        return redirect('/admin')
+            db.session.commit()
+            app.logger.info("Importados/atualizados via XLSX: %s", count)
+            return redirect(f"/admin?importados={count}")
+        except (ValueError, TypeError, OSError, KeyError) as exc:
+            db.session.rollback()
+            app.logger.warning("Planilha XLSX rejeitada: %s", exc)
+            return f"Erro na importação XLSX: {exc}", 400
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Falha na importação XLSX")
+            return "Falha ao importar XLSX. Consulte o log do Render.", 500
 
     # ------------------------
     # CSV (fallback)
