@@ -98,6 +98,12 @@
     </div>
   </header>
 
+  {% if request.args.get('importados') is not none %}
+  <div class="max-w-7xl mx-auto mt-4 px-6 py-3 bg-green-50 text-green-800 border border-green-200 rounded-md">
+    Planilha processada: {{ request.args.get('importados') }} imóvel(is) importado(s) ou atualizado(s).
+  </div>
+  {% endif %}
+
   <!-- ===================================================== -->
   <!-- CONTEÚDO -->
   <!-- ===================================================== -->
@@ -130,8 +136,8 @@
                  required 
                  class="field w-full"
                  inputmode="decimal"
-                 pattern="[0-9]+([.,][0-9]+)?"
-                 title="Digite apenas números. Ex: 954000 ou 954000.00">
+                 pattern="[0-9]+([.,][0-9]{1,2})?"
+                 title="Digite o valor sem separador de milhares. Ex: 954000 ou 954000,50">
           
           <!-- Helper visual com valor formatado em BRL (apenas na edição) -->
           {% if imovel and imovel.valor %}
@@ -272,50 +278,12 @@
   </footer>
 
   <!-- ===================================================== -->
-  <!-- SCRIPT OPCIONAL: FORMATAR VALOR EM TEMPO REAL NO INPUT -->
-  <!-- ===================================================== -->
+  <!-- O campo de valor recebe números sem máscara; a formatação BRL é feita na exibição. -->
   <script>
-    // Formata o campo de valor enquanto o usuário digita (opcional)
-    document.addEventListener('DOMContentLoaded', function() {
-      const inputValor = document.getElementById('input-valor');
-      const form = document.getElementById('form-imovel');
-      
-      if (!inputValor) return;
-      
-      // Formata ao carregar (para edição)
-      if (inputValor.value) {
-        const num = parseFloat(inputValor.value.replace(',', '.'));
-        if (!isNaN(num)) {
-          inputValor.dataset.raw = inputValor.value; // guarda valor bruto
-          inputValor.value = new Intl.NumberFormat('pt-BR', { 
-            style: 'currency', 
-            currency: 'BRL',
-            minimumFractionDigits: 0 
-          }).format(num);
-        }
-      }
-      
-      // Formata enquanto digita
-      inputValor.addEventListener('input', function(e) {
-        let raw = e.target.value.replace(/[^\d,\.]/g, '').replace(',', '.');
-        const num = parseFloat(raw);
-        if (!isNaN(num) && raw.length > 0) {
-          e.target.dataset.raw = num; // guarda número puro para envio
-          e.target.value = new Intl.NumberFormat('pt-BR', { 
-            style: 'currency', 
-            currency: 'BRL',
-            minimumFractionDigits: 0 
-          }).format(num);
-        }
-      });
-      
-      // Antes de enviar, restaura o valor bruto
-      if (form) {
-        form.addEventListener('submit', function(e) {
-          if (inputValor.dataset.raw !== undefined) {
-            inputValor.value = inputValor.dataset.raw;
-          }
-        });
+    document.addEventListener('DOMContentLoaded', function () {
+      const valor = document.getElementById('input-valor');
+      if (valor && valor.value) {
+        valor.value = valor.value.replace('.', ',');
       }
     });
   </script>
