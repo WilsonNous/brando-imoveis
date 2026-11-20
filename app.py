@@ -82,16 +82,19 @@ def format_brl(value):
 
 
 # ============================================================
-# ENGINE OPTIONS — MYSQL HOSTGATOR
+# ENGINE OPTIONS — MYSQL ENZONIC (TLS)
 # ============================================================
 
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_pre_ping": True,
     "pool_recycle": 280,
-    "pool_size": 5,
-    "max_overflow": 10,
+    "pool_size": 2,
+    "max_overflow": 2,
     "poolclass": QueuePool,
-    "connect_args": {"connect_timeout": 10},
+    "connect_args": {
+        "connection_timeout": 10,
+        **config.SQLALCHEMY_ENGINE_OPTIONS["connect_args"],
+    },
 }
 
 db.init_app(app)
