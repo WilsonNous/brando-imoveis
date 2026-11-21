@@ -431,15 +431,8 @@ def admin_modelo_xlsx():
     headers = ["codigo", "tipo", "valor", "bairro", "descricao", "status"]
     ws.append(headers)
 
-    # Exemplo (ajuda a preencher certo)
-    ws.append([
-        "A001",
-        "apartamento",
-        260000.00,
-        "Ingleses",
-        "Exemplo: 2 quartos, 1 suíte, sacada com churrasqueira...",
-        "ativo"
-    ])
+    # Não incluir linhas de exemplo na aba importável:
+    # códigos existentes poderiam ser sobrescritos acidentalmente.
 
     ws.freeze_panes = "A2"
 
@@ -466,6 +459,10 @@ def admin_modelo_xlsx():
     ws2.append(["2) Status deve ser: ativo ou inativo (use o dropdown)."])
     ws2.append(["3) Código é obrigatório e deve ser único (A001, C003, T010...)."])
     ws2.append(["4) Mantenha os nomes das colunas exatamente como no header."])
+    ws2.append(["5) A aba 'imoveis' começa vazia: preencha a partir da linha 2."])
+    ws2.append(["EXEMPLO ILUSTRATIVO — NÃO É UM IMÓVEL CADASTRADO"])
+    ws2.append(["codigo", "tipo", "valor", "bairro", "descricao", "status"])
+    ws2.append(["EXEMPLO001", "apartamento", 260000, "Bairro exemplo", "Descrição ilustrativa", "ativo"])
     ws2.column_dimensions["A"].width = 90
 
     out = io.BytesIO()
